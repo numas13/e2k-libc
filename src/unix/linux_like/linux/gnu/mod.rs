@@ -429,22 +429,26 @@ s_no_extra_traits! {
 
         #[cfg(any(target_arch = "aarch64",
                   target_arch = "s390x",
+                  target_arch = "e2k64",
                   all(target_pointer_width = "32",
                       not(target_arch = "x86_64"))))]
         pub ut_session: ::c_long,
         #[cfg(any(target_arch = "aarch64",
                   target_arch = "s390x",
+                  target_arch = "e2k64",
                   all(target_pointer_width = "32",
                       not(target_arch = "x86_64"))))]
         pub ut_tv: ::timeval,
 
         #[cfg(not(any(target_arch = "aarch64",
                       target_arch = "s390x",
+                      target_arch = "e2k64",
                       all(target_pointer_width = "32",
                           not(target_arch = "x86_64")))))]
         pub ut_session: i32,
         #[cfg(not(any(target_arch = "aarch64",
                       target_arch = "s390x",
+                      target_arch = "e2k64",
                       all(target_pointer_width = "32",
                           not(target_arch = "x86_64")))))]
         pub ut_tv: __timeval,
@@ -568,6 +572,16 @@ pub const RLIMIT_RTPRIO: ::__rlimit_resource_t = 14;
 pub const RLIMIT_RTTIME: ::__rlimit_resource_t = 15;
 pub const RLIMIT_NLIMITS: ::__rlimit_resource_t = 16;
 pub const RLIM_NLIMITS: ::__rlimit_resource_t = RLIMIT_NLIMITS;
+
+cfg_if! {
+    if #[cfg(target_arch = "e2k64")] {
+        pub const RLIMIT_ARCH_NUM: ::__rlimit_resource_t = 10001;
+        pub const RLIMIT_P_STACK: ::__rlimit_resource_t = 10001;
+        pub const RLIMIT_PC_STACK: ::__rlimit_resource_t = 10002;
+        pub const RLIMIT_NLIMITS_EXT: ::__rlimit_resource_t = 2;
+        pub const RLIM_NLIMITS_EXT: ::__rlimit_resource_t = 2;
+    }
+}
 
 pub const PRIO_PROCESS: ::__priority_which_t = 0;
 pub const PRIO_PGRP: ::__priority_which_t = 1;
@@ -1111,7 +1125,8 @@ cfg_if! {
         target_arch = "x86_64",
         target_arch = "s390x",
         target_arch = "riscv64",
-        target_arch = "riscv32"
+        target_arch = "riscv32",
+        target_arch = "e2k64"
     ))] {
         pub const PTHREAD_STACK_MIN: ::size_t = 16384;
     } else if #[cfg(any(
@@ -1365,7 +1380,8 @@ cfg_if! {
                         target_arch = "mips64",
                         target_arch = "s390x",
                         target_arch = "sparc64",
-                        target_arch = "riscv64"))] {
+                        target_arch = "riscv64",
+                        target_arch = "e2k64"))] {
         mod b64;
         pub use self::b64::*;
     } else {
