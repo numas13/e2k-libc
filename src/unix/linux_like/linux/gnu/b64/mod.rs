@@ -65,7 +65,10 @@ s! {
 pub const RLIM_INFINITY: ::rlim_t = !0;
 pub const __SIZEOF_PTHREAD_RWLOCKATTR_T: usize = 8;
 
+#[cfg(not(target_arch = "e2k64"))]
 pub const O_LARGEFILE: ::c_int = 0;
+#[cfg(target_arch = "e2k64")]
+pub const O_LARGEFILE: ::c_int = 0x8000;
 
 cfg_if! {
     if #[cfg(target_arch = "aarch64")] {
@@ -89,6 +92,9 @@ cfg_if! {
     } else if #[cfg(any(target_arch = "riscv64"))] {
         mod riscv64;
         pub use self::riscv64::*;
+    } else if #[cfg(any(target_arch = "e2k64"))] {
+        mod e2k64;
+        pub use self::e2k64::*;
     } else {
         // Unknown target_arch
     }

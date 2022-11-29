@@ -2370,6 +2370,7 @@ fn test_linux(target: &str) {
     let x86_64_gnux32 = target.contains("gnux32") && x86_64;
     let riscv64 = target.contains("riscv64");
     let uclibc = target.contains("uclibc");
+    let e2k64 = target.contains("e2k");
 
     let mut cfg = ctest_cfg();
     cfg.define("_GNU_SOURCE", None);
@@ -2748,11 +2749,11 @@ fn test_linux(target: &str) {
 
             // FIXME: Not currently available in headers
             "P_PIDFD" if mips => true,
-            "SYS_pidfd_open" if mips => true,
+            "SYS_pidfd_open" if mips | e2k64 => true,
 
             // FIXME: Not currently available in headers on MIPS
             // Not yet implemented on sparc64
-            "SYS_clone3" if mips | sparc64 => true,
+            "SYS_clone3" if mips | sparc64 | e2k64 => true,
 
             // FIXME: these syscalls were added in Linux 5.9 or later
             // and are currently not included in the glibc headers.
@@ -2783,6 +2784,13 @@ fn test_linux(target: &str) {
             | "SW_MAX"
             | "SW_CNT"
                 if mips || ppc64 || riscv64 || sparc64 => true,
+            // absent or unsupported in glibc-2.29
+            | "MSG_COPY"
+            | "SHM_EXEC"
+            | "IPV6_ROUTER_ALERT_ISOLATE"
+            | "UDP_GRO"
+            | "MAP_SYNC"
+                if e2k64 => true,
 
             _ => false,
         }
@@ -2854,7 +2862,7 @@ fn test_linux(target: &str) {
             "getnameinfo" if uclibc => true,
 
             // FIXME: This needs musl 1.2.2 or later.
-            "gettid" if musl => true,
+            "gettid" if musl || e2k64 => true,
 
             // Needs glibc 2.33 or later.
             "mallinfo2" => true,

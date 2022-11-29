@@ -2488,7 +2488,10 @@ pub const UDP_NO_CHECK6_RX: ::c_int = 102;
 pub const MAP_SHARED_VALIDATE: ::c_int = 0x3;
 
 // include/uapi/asm-generic/mman-common.h
+#[cfg(not(target_arch = "e2k64"))]
 pub const MAP_FIXED_NOREPLACE: ::c_int = 0x100000;
+#[cfg(target_arch = "e2k64")]
+pub const MAP_FIXED_NOREPLACE: ::c_int = 0x400000;
 
 // uapi/linux/vm_sockets.h
 pub const VMADDR_CID_ANY: ::c_uint = 0xFFFFFFFF;
