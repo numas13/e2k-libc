@@ -701,6 +701,10 @@ cfg_if! {
 pub const RAND_MAX: ::c_int = 0x7fff_ffff;
 pub const PTHREAD_STACK_MIN: ::size_t = 16384;
 pub const SIGSTKSZ: ::size_t = 40960;
+pub const SIGCKPT: ::c_int = 33;
+pub const SIGCKPTEXIT: ::c_int = 34;
+pub const CKPT_FREEZE: ::c_int = 0x1;
+pub const CKPT_THAW: ::c_int = 0x2;
 pub const MADV_INVAL: ::c_int = 10;
 pub const MADV_SETMAP: ::c_int = 11;
 pub const O_CLOEXEC: ::c_int = 0x00020000;
@@ -877,6 +881,13 @@ pub const EV_FLAG1: u16 = 0x2000;
 pub const EV_ERROR: u16 = 0x4000;
 pub const EV_EOF: u16 = 0x8000;
 pub const EV_SYSFLAGS: u16 = 0xf000;
+
+pub const FIODNAME: ::c_ulong = 0x80106678;
+#[deprecated(
+    since = "0.2.106",
+    note = "FIODGNAME is not defined on DragonFly BSD. See FIODNAME."
+)]
+pub const FIODGNAME: ::c_ulong = 0x80106678;
 
 pub const NOTE_TRIGGER: u32 = 0x01000000;
 pub const NOTE_FFNOP: u32 = 0x00000000;
@@ -1407,6 +1418,8 @@ extern "C" {
     pub fn updlastlogx(fname: *const ::c_char, uid: ::uid_t, ll: *mut lastlogx) -> ::c_int;
     pub fn getutxuser(name: *const ::c_char) -> utmpx;
     pub fn utmpxname(file: *const ::c_char) -> ::c_int;
+
+    pub fn sys_checkpoint(tpe: ::c_int, fd: ::c_int, pid: ::pid_t, retval: ::c_int) -> ::c_int;
 }
 
 #[link(name = "rt")]
