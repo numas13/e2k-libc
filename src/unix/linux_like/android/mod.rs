@@ -792,9 +792,6 @@ pub const EPROTO: ::c_int = 71;
 pub const EDOTDOT: ::c_int = 73;
 
 pub const EPOLL_CLOEXEC: ::c_int = 0x80000;
-pub const EPOLLONESHOT: ::c_int = 0x40000000;
-pub const EPOLLRDHUP: ::c_int = 0x00002000;
-pub const EPOLLWAKEUP: ::c_int = 0x20000000;
 
 // sys/eventfd.h
 pub const EFD_SEMAPHORE: ::c_int = 0x1;
@@ -1787,6 +1784,11 @@ pub const NETLINK_BROADCAST_ERROR: ::c_int = 4;
 pub const NETLINK_NO_ENOBUFS: ::c_int = 5;
 pub const NETLINK_RX_RING: ::c_int = 6;
 pub const NETLINK_TX_RING: ::c_int = 7;
+pub const NETLINK_LISTEN_ALL_NSID: ::c_int = 8;
+pub const NETLINK_LIST_MEMBERSHIPS: ::c_int = 9;
+pub const NETLINK_CAP_ACK: ::c_int = 10;
+pub const NETLINK_EXT_ACK: ::c_int = 11;
+pub const NETLINK_GET_STRICT_CHK: ::c_int = 12;
 
 pub const GRND_NONBLOCK: ::c_uint = 0x0001;
 pub const GRND_RANDOM: ::c_uint = 0x0002;
@@ -1866,6 +1868,25 @@ pub const O_TMPFILE: ::c_int = 0o20000000 | O_DIRECTORY;
 pub const MFD_CLOEXEC: ::c_uint = 0x0001;
 pub const MFD_ALLOW_SEALING: ::c_uint = 0x0002;
 pub const MFD_HUGETLB: ::c_uint = 0x0004;
+
+// these are used in the p_type field of Elf32_Phdr and Elf64_Phdr, which has
+// the type Elf32Word and Elf64Word respectively. Luckily, both of those are u32
+// so we can use that type here to avoid having to cast.
+pub const PT_NULL: u32 = 0;
+pub const PT_LOAD: u32 = 1;
+pub const PT_DYNAMIC: u32 = 2;
+pub const PT_INTERP: u32 = 3;
+pub const PT_NOTE: u32 = 4;
+pub const PT_SHLIB: u32 = 5;
+pub const PT_PHDR: u32 = 6;
+pub const PT_TLS: u32 = 7;
+pub const PT_LOOS: u32 = 0x60000000;
+pub const PT_GNU_EH_FRAME: u32 = 0x6474e550;
+pub const PT_GNU_STACK: u32 = 0x6474e551;
+pub const PT_GNU_RELRO: u32 = 0x6474e552;
+pub const PT_HIOS: u32 = 0x6fffffff;
+pub const PT_LOPROC: u32 = 0x70000000;
+pub const PT_HIPROC: u32 = 0x7fffffff;
 
 // linux/netfilter.h
 pub const NF_DROP: ::c_int = 0;

@@ -212,16 +212,16 @@ fn test_apple(target: &str) {
         "net/if_dl.h",
         "net/if_utun.h",
         "net/route.h",
-        "net/route.h",
         "netdb.h",
         "netinet/if_ether.h",
-        "netinet/in.h",
         "netinet/in.h",
         "netinet/ip.h",
         "netinet/tcp.h",
         "netinet/udp.h",
         "poll.h",
         "pthread.h",
+        "pthread_spis.h",
+        "pthread/introspection.h",
         "pwd.h",
         "regex.h",
         "resolv.h",
@@ -285,6 +285,10 @@ fn test_apple(target: &str) {
         }
     });
 
+    cfg.skip_type(move |ty| match ty {
+        _ => false,
+    });
+
     cfg.skip_const(move |name| {
         // They're declared via `deprecated_mach` and we don't support it anymore.
         if name.starts_with("VM_FLAGS_") {
@@ -296,8 +300,6 @@ fn test_apple(target: &str) {
             "KERN_KDENABLE_BG_TRACE" | "KERN_KDDISABLE_BG_TRACE" => true,
             // FIXME: the value has been changed since Catalina (0xffff0000 -> 0x3fff0000).
             "SF_SETTABLE" => true,
-            // FIXME: the values have been changed since Big Sur
-            "HW_TARGET" | "HW_PRODUCT" | "HW_MAXID" => true,
             _ => false,
         }
     });
@@ -310,9 +312,6 @@ fn test_apple(target: &str) {
 
             // close calls the close_nocancel system call
             "close" => true,
-
-            // these calls require macOS 11.0 or higher
-            "preadv" | "pwritev" => true,
 
             _ => false,
         }
@@ -480,6 +479,8 @@ fn test_openbsd(target: &str) {
         match name {
             // Removed in OpenBSD 6.0
             "KERN_USERMOUNT" | "KERN_ARND" => true,
+            // Good chance it's going to be wrong depending on the host release
+            "KERN_MAXID" | "NET_RT_MAXID" => true,
             _ => false,
         }
     });
@@ -784,6 +785,7 @@ fn test_solarish(target: &str) {
         "sys/wait.h",
         "syslog.h",
         "termios.h",
+        "thread.h",
         "time.h",
         "ucontext.h",
         "unistd.h",
@@ -1828,6 +1830,7 @@ fn test_freebsd(target: &str) {
                 "sys/stat.h",
                 "sys/statvfs.h",
                 "sys/sysctl.h",
+                "sys/thr.h",
                 "sys/time.h",
                 "sys/times.h",
                 "sys/timex.h",
@@ -2568,6 +2571,7 @@ fn test_linux(target: &str) {
         cfg:
         "asm/mman.h",
         "linux/can.h",
+        "linux/can/raw.h",
         "linux/dccp.h",
         "linux/errqueue.h",
         "linux/falloc.h",

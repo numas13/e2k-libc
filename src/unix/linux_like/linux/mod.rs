@@ -671,6 +671,19 @@ s_no_extra_traits! {
 }
 
 cfg_if! {
+    if #[cfg(not(all(target_env = "musl", target_arch = "mips")))] {
+        s_no_extra_traits! {
+            // linux/net_tstamp.h
+            #[allow(missing_debug_implementations)]
+            pub struct sock_txtime {
+                pub clockid: ::clockid_t,
+                pub flags: ::__u32,
+            }
+        }
+    }
+}
+
+cfg_if! {
     if #[cfg(libc_union)] {
         s_no_extra_traits! {
             // linux/can.h
@@ -1537,11 +1550,6 @@ pub const SHM_UNLOCK: ::c_int = 12;
 pub const SHM_HUGETLB: ::c_int = 0o4000;
 #[cfg(not(all(target_env = "uclibc", target_arch = "mips")))]
 pub const SHM_NORESERVE: ::c_int = 0o10000;
-
-pub const EPOLLRDHUP: ::c_int = 0x2000;
-pub const EPOLLEXCLUSIVE: ::c_int = 0x10000000;
-pub const EPOLLWAKEUP: ::c_int = 0x20000000;
-pub const EPOLLONESHOT: ::c_int = 0x40000000;
 
 pub const QFMT_VFS_OLD: ::c_int = 1;
 pub const QFMT_VFS_V0: ::c_int = 2;
@@ -2528,6 +2536,12 @@ pub const SOF_TIMESTAMPING_RX_SOFTWARE: ::c_uint = 1 << 3;
 pub const SOF_TIMESTAMPING_SOFTWARE: ::c_uint = 1 << 4;
 pub const SOF_TIMESTAMPING_SYS_HARDWARE: ::c_uint = 1 << 5;
 pub const SOF_TIMESTAMPING_RAW_HARDWARE: ::c_uint = 1 << 6;
+cfg_if! {
+    if #[cfg(not(all(target_env = "musl", target_arch = "mips")))] {
+        pub const SOF_TXTIME_DEADLINE_MODE: u32 = 1 << 0;
+        pub const SOF_TXTIME_REPORT_ERRORS: u32 = 1 << 1;
+    }
+}
 
 // linux/if_alg.h
 pub const ALG_SET_KEY: ::c_int = 1;
@@ -3057,6 +3071,15 @@ pub const SOL_CAN_BASE: ::c_int = 100;
 
 pub const CAN_INV_FILTER: canid_t = 0x20000000;
 pub const CAN_RAW_FILTER_MAX: ::c_int = 512;
+
+// linux/can/raw.h
+pub const SOL_CAN_RAW: ::c_int = SOL_CAN_BASE + CAN_RAW;
+pub const CAN_RAW_FILTER: ::c_int = 1;
+pub const CAN_RAW_ERR_FILTER: ::c_int = 2;
+pub const CAN_RAW_LOOPBACK: ::c_int = 3;
+pub const CAN_RAW_RECV_OWN_MSGS: ::c_int = 4;
+pub const CAN_RAW_FD_FRAMES: ::c_int = 5;
+pub const CAN_RAW_JOIN_FILTERS: ::c_int = 6;
 
 #[deprecated(
     since = "0.2.102",

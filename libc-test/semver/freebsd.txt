@@ -1410,6 +1410,7 @@ cmsgcred
 cmsghdr
 daemon
 dallocx
+devname_r
 difftime
 dirfd
 dl_iterate_phdr
@@ -1452,6 +1453,7 @@ flsl
 flsll
 fmemopen
 forkpty
+fparseln
 freeifaddrs
 freelocale
 fsid_t
@@ -1752,6 +1754,9 @@ sysctl
 sysctlbyname
 sysctlnametomib
 telldir
+thr_kill
+thr_kill2
+thr_self
 timer_create
 timer_delete
 timer_getoverrun

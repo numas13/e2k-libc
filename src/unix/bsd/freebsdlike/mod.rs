@@ -1410,6 +1410,12 @@ extern "C" {
     pub fn sem_init(sem: *mut sem_t, pshared: ::c_int, value: ::c_uint) -> ::c_int;
 
     pub fn daemon(nochdir: ::c_int, noclose: ::c_int) -> ::c_int;
+    pub fn devname_r(
+        dev: ::dev_t,
+        mode: ::mode_t,
+        buf: *mut ::c_char,
+        len: ::c_int,
+    ) -> *mut ::c_char;
     pub fn gettimeofday(tp: *mut ::timeval, tz: *mut ::timezone) -> ::c_int;
     pub fn accept4(
         s: ::c_int,
@@ -1721,6 +1727,13 @@ extern "C" {
         winp: *mut ::winsize,
     ) -> ::pid_t;
     pub fn login_tty(fd: ::c_int) -> ::c_int;
+    pub fn fparseln(
+        stream: *mut ::FILE,
+        len: *mut ::size_t,
+        lineno: *mut ::size_t,
+        delim: *const ::c_char,
+        flags: ::c_int,
+    ) -> *mut ::c_char;
 }
 
 #[link(name = "execinfo")]
