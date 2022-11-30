@@ -26,6 +26,13 @@ fn do_cc() {
     if target.contains("android") || target.contains("linux") {
         cc::Build::new().file("src/errqueue.c").compile("errqueue");
     }
+    if target.contains("linux")
+        || target.contains("l4re")
+        || target.contains("android")
+        || target.contains("emscripten")
+    {
+        cc::Build::new().file("src/sigrt.c").compile("sigrt");
+    }
 }
 
 fn do_ctest() {
@@ -175,6 +182,7 @@ fn test_apple(target: &str) {
         "aio.h",
         "CommonCrypto/CommonCrypto.h",
         "CommonCrypto/CommonRandom.h",
+        "crt_externs.h",
         "ctype.h",
         "dirent.h",
         "dlfcn.h",
@@ -193,6 +201,7 @@ fn test_apple(target: &str) {
         "mach/mach_init.h",
         "mach/mach_time.h",
         "mach/mach_types.h",
+        "mach/mach_vm.h",
         "mach/thread_act.h",
         "mach/thread_policy.h",
         "malloc/malloc.h",
@@ -413,6 +422,7 @@ fn test_openbsd(target: &str) {
         "sys/ioctl.h",
         "sys/mman.h",
         "sys/resource.h",
+        "sys/shm.h",
         "sys/socket.h",
         "sys/time.h",
         "sys/un.h",
@@ -942,6 +952,7 @@ fn test_netbsd(target: &str) {
         "semaphore.h",
         "signal.h",
         "string.h",
+        "sys/endian.h",
         "sys/extattr.h",
         "sys/file.h",
         "sys/ioctl.h",
@@ -950,6 +961,7 @@ fn test_netbsd(target: &str) {
         "sys/mount.h",
         "sys/ptrace.h",
         "sys/resource.h",
+        "sys/shm.h",
         "sys/socket.h",
         "sys/statvfs.h",
         "sys/sysctl.h",
@@ -1157,12 +1169,14 @@ fn test_dragonflybsd(target: &str) {
         "sys/event.h",
         "sys/file.h",
         "sys/ioctl.h",
+        "sys/ipc.h",
         "sys/mman.h",
         "sys/mount.h",
         "sys/ptrace.h",
         "sys/resource.h",
         "sys/rtprio.h",
         "sys/sched.h",
+        "sys/shm.h",
         "sys/socket.h",
         "sys/stat.h",
         "sys/statvfs.h",
@@ -1628,6 +1642,7 @@ fn test_android(target: &str) {
             // We skip the test here since here _GNU_SOURCE is defined, and
             // test the XSI version below.
             "strerror_r" => true,
+            "reallocarray" => true,
 
             _ => false,
         }
@@ -1714,6 +1729,7 @@ fn test_freebsd(target: &str) {
                 "dlfcn.h",
                 "elf.h",
                 "errno.h",
+                "execinfo.h",
                 "fcntl.h",
                 "glob.h",
                 "grp.h",
@@ -1725,6 +1741,7 @@ fn test_freebsd(target: &str) {
                 "link.h",
                 "locale.h",
                 "machine/reg.h",
+                "malloc_np.h",
                 "mqueue.h",
                 "net/bpf.h",
                 "net/if.h",
@@ -1780,6 +1797,7 @@ fn test_freebsd(target: &str) {
                 "sys/ucontext.h",
                 "sys/uio.h",
                 "sys/un.h",
+                "sys/user.h",
                 "sys/utsname.h",
                 "sys/wait.h",
                 "syslog.h",
@@ -2010,6 +2028,8 @@ fn test_freebsd(target: &str) {
             ("umutex", "m_owner") => true,
             // c_has_waiters field is a volatile int32_t
             ("ucond", "c_has_waiters") => true,
+            // is PATH_MAX long but tests can't accept multi array as equivalent.
+            ("kinfo_vmentry", "kve_path") => true,
 
             _ => false,
         }
@@ -2879,6 +2899,8 @@ fn test_linux(target: &str) {
             // Needs glibc 2.33 or later.
             "mallinfo2" => true,
 
+            "reallocarray" if musl => true,
+
             _ => false,
         }
     });
@@ -3272,6 +3294,7 @@ fn test_haiku(target: &str) {
                "kernel/fs_volume.h",
                "kernel/image.h",
                "kernel/scheduler.h",
+               "storage/FindDirectory.h",
                "storage/StorageDefs.h",
                "support/Errors.h",
                "support/SupportDefs.h",
