@@ -676,6 +676,7 @@ MAP_FILE
 MAP_HASSEMAPHORE
 MAP_NOCORE
 MAP_NOSYNC
+MAP_PREFAULT_READ
 MAP_STACK
 MAXFREQ
 MAXPHASE
@@ -1364,6 +1365,7 @@ _SC_XOPEN_STREAMS
 _SC_XOPEN_UNIX
 _SC_XOPEN_VERSION
 _SC_XOPEN_XCU_VERSION
+_UUID_NODE_LEN
 __c_anonymous_cr_pid
 __error
 __xuname
@@ -1489,6 +1491,8 @@ getutxuser
 glob
 glob_t
 globfree
+hexdump
+humanize_number
 iconv
 iconv_close
 iconv_open
@@ -1638,6 +1642,7 @@ pthread_condattr_getclock
 pthread_condattr_getpshared
 pthread_condattr_setclock
 pthread_condattr_setpshared
+pthread_get_name_np
 pthread_getaffinity_np
 pthread_getcpuclockid
 pthread_getthreadid_np
@@ -1747,14 +1752,22 @@ sysctl
 sysctlbyname
 sysctlnametomib
 telldir
+timer_create
+timer_delete
+timer_getoverrun
+timer_gettime
+timer_settime
+timer_t
 timex
 truncate
 ttyname_r
+uuidgen
 unmount
 useconds_t
 uselocale
 utimensat
 utmpx
+utrace
 vm_size_t
 wait4
 waitid

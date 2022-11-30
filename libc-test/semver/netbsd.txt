@@ -1146,6 +1146,7 @@ fchdir
 fchflags
 fdatasync
 fdopendir
+flags_to_string
 fmemopen
 forkpty
 freeifaddrs
@@ -1208,6 +1209,7 @@ in6_pktinfo
 in_pktinfo
 initgroups
 ipc_perm
+itimerspec
 kevent
 key_t
 killpg
@@ -1269,6 +1271,7 @@ openat
 openpty
 pause
 pipe2
+pollts
 popen
 posix_madvise
 preadv
@@ -1284,6 +1287,7 @@ pthread_cancel
 pthread_condattr_setclock
 pthread_getattr_np
 pthread_getaffinity_np
+pthread_getname_np
 pthread_kill
 pthread_mutex_timedlock
 pthread_spin_destroy
@@ -1367,6 +1371,7 @@ srand
 stack_t
 strcasecmp
 strcasestr
+string_to_flags
 strncasecmp
 strndup
 strpct
@@ -1377,6 +1382,12 @@ syscall
 sysctl
 sysctlbyname
 telldir
+timer_create
+timer_delete
+timer_getoverrun
+timer_gettime
+timer_settime
+timer_t
 timex
 truncate
 ttyname_r
@@ -1390,6 +1401,7 @@ utmp
 utmpx
 utmpxname
 utpname
+utrace
 vm_size_t
 wait4
 waitid

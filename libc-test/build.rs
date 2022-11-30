@@ -428,10 +428,13 @@ fn test_openbsd(target: &str) {
         "sys/file.h",
         "sys/ioctl.h",
         "sys/mman.h",
+        "sys/param.h",
         "sys/resource.h",
         "sys/shm.h",
         "sys/socket.h",
         "sys/time.h",
+        "sys/uio.h",
+        "sys/ktrace.h",
         "sys/un.h",
         "sys/wait.h",
         "unistd.h",
@@ -539,6 +542,9 @@ fn test_windows(target: &str) {
     let gnu = target.contains("gnu");
 
     let mut cfg = ctest_cfg();
+    if target.contains("msvc") {
+        cfg.flag("/wd4324");
+    }
     cfg.define("_WIN32_WINNT", Some("0x8000"));
 
     headers! { cfg:
@@ -603,6 +609,13 @@ fn test_windows(target: &str) {
         _ => false,
     });
 
+    cfg.skip_struct(move |ty| {
+        if ty.starts_with("__c_anonymous_") {
+            return true;
+        }
+        return false;
+    });
+
     cfg.skip_const(move |name| {
         match name {
             // FIXME: API error:
@@ -616,6 +629,10 @@ fn test_windows(target: &str) {
         }
     });
 
+    cfg.skip_field(move |s, field| match s {
+        "CONTEXT" if field == "Fp" => true,
+        _ => false,
+    });
     // FIXME: All functions point to the wrong addresses?
     cfg.skip_fn_ptrcheck(|_| true);
 
@@ -969,6 +986,7 @@ fn test_netbsd(target: &str) {
         "sys/file.h",
         "sys/ioctl.h",
         "sys/ioctl_compat.h",
+        "sys/ktrace.h",
         "sys/mman.h",
         "sys/mount.h",
         "sys/ptrace.h",
@@ -1185,6 +1203,7 @@ fn test_dragonflybsd(target: &str) {
         "sys/file.h",
         "sys/ioctl.h",
         "sys/ipc.h",
+        "sys/ktrace.h",
         "sys/mman.h",
         "sys/mount.h",
         "sys/ptrace.h",
@@ -1815,9 +1834,11 @@ fn test_freebsd(target: &str) {
                 "sys/types.h",
                 "sys/ucontext.h",
                 "sys/uio.h",
+                "sys/ktrace.h",
                 "sys/un.h",
                 "sys/user.h",
                 "sys/utsname.h",
+                "sys/uuid.h",
                 "sys/wait.h",
                 "libprocstat.h",
                 "syslog.h",
@@ -2854,6 +2875,34 @@ fn test_linux(target: &str) {
             | "MAP_SYNC"
                 if e2k64 => true,
 
+            // kernel constants not available in uclibc 1.0.34
+            | "ADDR_COMPAT_LAYOUT"
+            | "ADDR_LIMIT_3GB"
+            | "ADDR_NO_RANDOMIZE"
+            | "CLONE_NEWCGROUP"
+            | "EXTPROC"
+            | "FAN_MARK_FILESYSTEM"
+            | "FAN_MARK_INODE"
+            | "IPPROTO_BEETPH"
+            | "IPPROTO_MPLS"
+            | "IPV6_HDRINCL"
+            | "IPV6_MULTICAST_ALL"
+            | "IPV6_PMTUDISC_INTERFACE"
+            | "IPV6_PMTUDISC_OMIT"
+            | "IPV6_ROUTER_ALERT_ISOLATE"
+            | "O_TMPFILE"
+            | "PACKET_MR_UNICAST"
+            | "PTRACE_EVENT_STOP"
+            | "PTRACE_O_EXITKILL"
+            | "PTRACE_O_SUSPEND_SECCOMP"
+            | "PTRACE_PEEKSIGINFO"
+            | "READ_IMPLIES_EXEC"
+            | "RUSAGE_THREAD"
+            | "SHM_EXEC"
+            | "UDP_GRO"
+            | "UDP_SEGMENT"
+                if uclibc => true,
+
             _ => false,
         }
     });
@@ -2930,6 +2979,9 @@ fn test_linux(target: &str) {
             "mallinfo2" => true,
 
             "reallocarray" if musl => true,
+
+            // Not defined in uclibc as of 1.0.34
+            "gettid" if uclibc => true,
 
             _ => false,
         }
