@@ -1039,6 +1039,36 @@ pub const AT_SYMLINK_NOFOLLOW: ::c_int = 0x200;
 pub const AT_SYMLINK_FOLLOW: ::c_int = 0x400;
 pub const AT_REMOVEDIR: ::c_int = 0x800;
 
+pub const AT_NULL: ::c_int = 0;
+pub const AT_IGNORE: ::c_int = 1;
+pub const AT_EXECFD: ::c_int = 2;
+pub const AT_PHDR: ::c_int = 3;
+pub const AT_PHENT: ::c_int = 4;
+pub const AT_PHNUM: ::c_int = 5;
+pub const AT_PAGESZ: ::c_int = 6;
+pub const AT_BASE: ::c_int = 7;
+pub const AT_FLAGS: ::c_int = 8;
+pub const AT_ENTRY: ::c_int = 9;
+pub const AT_DCACHEBSIZE: ::c_int = 10;
+pub const AT_ICACHEBSIZE: ::c_int = 11;
+pub const AT_UCACHEBSIZE: ::c_int = 12;
+pub const AT_STACKBASE: ::c_int = 13;
+pub const AT_EUID: ::c_int = 2000;
+pub const AT_RUID: ::c_int = 2001;
+pub const AT_EGID: ::c_int = 2002;
+pub const AT_RGID: ::c_int = 2003;
+pub const AT_SUN_LDELF: ::c_int = 2004;
+pub const AT_SUN_LDSHDR: ::c_int = 2005;
+pub const AT_SUN_LDNAME: ::c_int = 2006;
+pub const AT_SUN_LDPGSIZE: ::c_int = 2007;
+pub const AT_SUN_PLATFORM: ::c_int = 2008;
+pub const AT_SUN_HWCAP: ::c_int = 2009;
+pub const AT_SUN_IFLUSH: ::c_int = 2010;
+pub const AT_SUN_CPU: ::c_int = 2011;
+pub const AT_SUN_EMUL_ENTRY: ::c_int = 2012;
+pub const AT_SUN_EMUL_EXECFD: ::c_int = 2013;
+pub const AT_SUN_EXECNAME: ::c_int = 2014;
+
 pub const EXTATTR_NAMESPACE_USER: ::c_int = 1;
 pub const EXTATTR_NAMESPACE_SYSTEM: ::c_int = 2;
 
@@ -1531,6 +1561,11 @@ pub const PTHREAD_MUTEX_NORMAL: ::c_int = 0;
 pub const PTHREAD_MUTEX_ERRORCHECK: ::c_int = 1;
 pub const PTHREAD_MUTEX_RECURSIVE: ::c_int = 2;
 pub const PTHREAD_MUTEX_DEFAULT: ::c_int = PTHREAD_MUTEX_NORMAL;
+
+pub const SCHED_NONE: ::c_int = -1;
+pub const SCHED_OTHER: ::c_int = 0;
+pub const SCHED_FIFO: ::c_int = 1;
+pub const SCHED_RR: ::c_int = 2;
 
 pub const EVFILT_AIO: u32 = 2;
 pub const EVFILT_PROC: u32 = 4;
@@ -2234,6 +2269,12 @@ extern "C" {
 
     pub fn sched_setparam(pid: ::pid_t, param: *const sched_param) -> ::c_int;
     pub fn sched_getparam(pid: ::pid_t, param: *mut sched_param) -> ::c_int;
+    pub fn sched_getscheduler(pid: ::pid_t) -> ::c_int;
+    pub fn sched_setscheduler(
+        pid: ::pid_t,
+        policy: ::c_int,
+        param: *const ::sched_param,
+    ) -> ::c_int;
 }
 
 #[link(name = "util")]

@@ -1238,6 +1238,8 @@ extern "C" {
     pub fn ntp_adjtime(buf: *mut timex) -> ::c_int;
     #[link_name = "ntp_gettimex"]
     pub fn ntp_gettime(buf: *mut ntptimeval) -> ::c_int;
+    pub fn clock_adjtime(clk_id: ::clockid_t, buf: *mut ::timex) -> ::c_int;
+
     pub fn copy_file_range(
         fd_in: ::c_int,
         off_in: *mut ::off64_t,
@@ -1354,6 +1356,8 @@ extern "C" {
     ) -> ::c_int;
     pub fn pthread_getname_np(thread: ::pthread_t, name: *mut ::c_char, len: ::size_t) -> ::c_int;
     pub fn pthread_setname_np(thread: ::pthread_t, name: *const ::c_char) -> ::c_int;
+
+    pub fn sethostid(hostid: ::c_long) -> ::c_int;
 }
 
 extern "C" {

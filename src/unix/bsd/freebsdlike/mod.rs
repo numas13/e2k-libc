@@ -345,6 +345,16 @@ s! {
         pub dlpi_tls_modid: usize,
         pub dlpi_tls_data: *mut ::c_void,
     }
+
+    pub struct ipc_perm {
+        pub cuid: ::uid_t,
+        pub cgid: ::gid_t,
+        pub uid: ::uid_t,
+        pub gid: ::gid_t,
+        pub mode: ::mode_t,
+        pub seq: ::c_ushort,
+        pub key: ::key_t,
+    }
 }
 
 s_no_extra_traits! {
@@ -1554,6 +1564,8 @@ extern "C" {
         -> ::ssize_t;
     pub fn querylocale(mask: ::c_int, loc: ::locale_t) -> *const ::c_char;
     pub fn rtprio(function: ::c_int, pid: ::pid_t, rtp: *mut rtprio) -> ::c_int;
+    pub fn sched_getparam(pid: ::pid_t, param: *mut sched_param) -> ::c_int;
+    pub fn sched_setparam(pid: ::pid_t, param: *const sched_param) -> ::c_int;
     pub fn sched_getscheduler(pid: ::pid_t) -> ::c_int;
     pub fn sched_setscheduler(
         pid: ::pid_t,
@@ -1643,6 +1655,8 @@ extern "C" {
     pub fn explicit_bzero(s: *mut ::c_void, len: ::size_t);
     // ISO/IEC 9899:2011 ("ISO C11") K.3.7.4.1
     pub fn memset_s(s: *mut ::c_void, smax: ::size_t, c: ::c_int, n: ::size_t) -> ::c_int;
+    pub fn gethostid() -> ::c_long;
+    pub fn sethostid(hostid: ::c_long);
 }
 
 #[link(name = "rt")]

@@ -678,6 +678,49 @@ s! {
         pub sched_priority: ::c_int,
         __opaque: [::c_char; 4],
     }
+
+    pub struct vinfo_stat {
+        pub vst_dev: u32,
+        pub vst_mode: u16,
+        pub vst_nlink: u16,
+        pub vst_ino: u64,
+        pub vst_uid: ::uid_t,
+        pub vst_gid: ::gid_t,
+        pub vst_atime: i64,
+        pub vst_atimensec: i64,
+        pub vst_mtime: i64,
+        pub vst_mtimensec: i64,
+        pub vst_ctime: i64,
+        pub vst_ctimensec: i64,
+        pub vst_birthtime: i64,
+        pub vst_birthtimensec: i64,
+        pub vst_size: ::off_t,
+        pub vst_blocks: i64,
+        pub vst_blksize: i32,
+        pub vst_flags: u32,
+        pub vst_gen: u32,
+        pub vst_rdev: u32,
+        pub vst_qspare: [i64; 2],
+    }
+
+    pub struct vnode_info {
+        pub vi_stat: vinfo_stat,
+        pub vi_type: ::c_int,
+        pub vi_pad: ::c_int,
+        pub vi_fsid: ::fsid_t,
+    }
+
+    pub struct vnode_info_path {
+        pub vip_vi: vnode_info,
+        // Normally it's `vip_path: [::c_char; MAXPATHLEN]` but because libc supports an old rustc
+        // version, we go around this limitation like this.
+        pub vip_path: [[::c_char; 32]; 32],
+    }
+
+    pub struct proc_vnodepathinfo {
+        pub pvi_cdir: vnode_info_path,
+        pub pvi_rdir: vnode_info_path,
+    }
 }
 
 s_no_extra_traits! {
@@ -1587,7 +1630,7 @@ cfg_if! {
             fn fmt(&self, f: &mut ::fmt::Formatter) -> ::fmt::Result {
                 f.debug_struct("time_value_t")
                     .field("seconds", &self.seconds)
-                    .field("microseconds", &self.seconds)
+                    .field("microseconds", &self.microseconds)
                     .finish()
             }
         }
@@ -1699,7 +1742,7 @@ cfg_if! {
             fn fmt(&self, f: &mut ::fmt::Formatter) -> ::fmt::Result {
                 f.debug_struct("thread_identifier_info")
                     .field("thread_id", &self.thread_id)
-                    .field("thread_handlee", &self.thread_handle)
+                    .field("thread_handle", &self.thread_handle)
                     .field("dispatch_qaddr", &self.dispatch_qaddr)
                     .finish()
             }
@@ -3530,8 +3573,11 @@ pub const RTAX_MAX: ::c_int = 8;
 pub const KERN_PROCARGS2: ::c_int = 49;
 
 pub const PROC_PIDTASKALLINFO: ::c_int = 2;
+pub const PROC_PIDTBSDINFO: ::c_int = 3;
 pub const PROC_PIDTASKINFO: ::c_int = 4;
 pub const PROC_PIDTHREADINFO: ::c_int = 5;
+pub const PROC_PIDVNODEPATHINFO: ::c_int = 9;
+pub const PROC_PIDPATHINFO_MAXSIZE: ::c_int = 4096;
 pub const MAXCOMLEN: usize = 16;
 pub const MAXTHREADNAMESIZE: usize = 64;
 
@@ -4037,8 +4083,6 @@ extern "C" {
         policy: ::c_int,
         param: *const sched_param,
     ) -> ::c_int;
-    pub fn sched_get_priority_min(policy: ::c_int) -> ::c_int;
-    pub fn sched_get_priority_max(policy: ::c_int) -> ::c_int;
     pub fn thread_policy_set(
         thread: thread_t,
         flavor: thread_policy_flavor_t,
@@ -4408,11 +4452,15 @@ extern "C" {
         buffer: *mut ::c_void,
         buffersize: u32,
     ) -> ::c_int;
+    pub fn proc_kmsgbuf(buffer: *mut ::c_void, buffersize: u32) -> ::c_int;
     pub fn proc_libversion(major: *mut ::c_int, mintor: *mut ::c_int) -> ::c_int;
     /// # Notes
     ///
     /// `id` is of type [`uuid_t`].
     pub fn gethostuuid(id: *mut u8, timeout: *const ::timespec) -> ::c_int;
+
+    pub fn gethostid() -> ::c_long;
+    pub fn sethostid(hostid: ::c_long);
 
     pub fn CCRandomGenerateBytes(bytes: *mut ::c_void, size: ::size_t) -> ::CCRNGStatus;
 

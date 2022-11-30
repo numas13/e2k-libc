@@ -321,6 +321,8 @@ fn test_apple(target: &str) {
             // FIXME: the array size has been changed since macOS 10.15 ([8] -> [7]).
             ("statfs", "f_reserved") => true,
             ("__darwin_arm_neon_state64", "__v") => true,
+            // MAXPATHLEN is too big for auto-derive traits on arrays.
+            ("vnode_info_path", "vip_path") => true,
             _ => false,
         }
     });
@@ -454,6 +456,7 @@ fn test_openbsd(target: &str) {
         "pthread_np.h",
         "sys/syscall.h",
         "sys/shm.h",
+        "sys/param.h",
     }
 
     cfg.skip_struct(move |ty| {
@@ -953,6 +956,7 @@ fn test_netbsd(target: &str) {
         "signal.h",
         "string.h",
         "sys/endian.h",
+        "sys/exec_elf.h",
         "sys/extattr.h",
         "sys/file.h",
         "sys/ioctl.h",
@@ -1594,6 +1598,8 @@ fn test_android(target: &str) {
             "termios2" => true,
             // uc_sigmask and uc_sigmask64 of ucontext_t are an anonymous union
             "ucontext_t" => true,
+            // 'private' type
+            "prop_info" => true,
 
             _ => false,
         }
@@ -1643,6 +1649,7 @@ fn test_android(target: &str) {
             // test the XSI version below.
             "strerror_r" => true,
             "reallocarray" => true,
+            "__system_property_wait" => true,
 
             _ => false,
         }
@@ -1740,6 +1747,7 @@ fn test_freebsd(target: &str) {
                 "limits.h",
                 "link.h",
                 "locale.h",
+                "machine/elf.h",
                 "machine/reg.h",
                 "malloc_np.h",
                 "mqueue.h",
@@ -1780,8 +1788,10 @@ fn test_freebsd(target: &str) {
                 "sys/mman.h",
                 "sys/mount.h",
                 "sys/msg.h",
+                "sys/procctl.h",
                 "sys/procdesc.h",
                 "sys/ptrace.h",
+                "sys/queue.h",
                 "sys/random.h",
                 "sys/resource.h",
                 "sys/rtprio.h",
@@ -1800,6 +1810,7 @@ fn test_freebsd(target: &str) {
                 "sys/user.h",
                 "sys/utsname.h",
                 "sys/wait.h",
+                "libprocstat.h",
                 "syslog.h",
                 "termios.h",
                 "time.h",
@@ -1813,7 +1824,8 @@ fn test_freebsd(target: &str) {
     cfg.type_name(move |ty, is_struct, is_union| {
         match ty {
             // Just pass all these through, no need for a "struct" prefix
-            "FILE" | "fd_set" | "Dl_info" | "DIR" | "Elf32_Phdr" | "Elf64_Phdr" => ty.to_string(),
+            "FILE" | "fd_set" | "Dl_info" | "DIR" | "Elf32_Phdr" | "Elf64_Phdr"
+            | "Elf32_Auxinfo" | "Elf64_Auxinfo" => ty.to_string(),
 
             // FIXME: https://github.com/rust-lang/libc/issues/1273
             "sighandler_t" => "sig_t".to_string(),
@@ -1955,6 +1967,9 @@ fn test_freebsd(target: &str) {
             // `max_align_t` is not available in FreeBSD 10
             "max_align_t" if Some(10) == freebsd_ver => true,
 
+            // `procstat` is a private struct
+            "procstat" => true,
+
             _ => false,
         }
     });
@@ -2031,6 +2046,9 @@ fn test_freebsd(target: &str) {
             // is PATH_MAX long but tests can't accept multi array as equivalent.
             ("kinfo_vmentry", "kve_path") => true,
 
+            // a_un field is a union
+            ("Elf32_Auxinfo", "a_un") => true,
+            ("Elf64_Auxinfo", "a_un") => true,
             _ => false,
         }
     });
@@ -3319,6 +3337,9 @@ fn test_haiku(target: &str) {
             // is sized as the _POSIX_MAX_PATH, so that path names will fit in
             // newly allocated dirent objects. This breaks the automated tests.
             "dirent" => true,
+            // The following structs contain function pointers, which cannot be initialized
+            // with mem::zeroed(), so skip the automated test
+            "image_info" | "thread_info" => true,
 
             _ => false,
         }
@@ -3352,6 +3373,9 @@ fn test_haiku(target: &str) {
             "mlock" | "munlock" => true,
             // returns const char * on Haiku
             "strsignal" => true,
+            // uses an enum as a parameter argument, which is incorrectly
+            // translated into a struct argument
+            "find_path" => true,
 
             _ => false,
         }
