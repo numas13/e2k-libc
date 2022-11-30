@@ -52,7 +52,7 @@ pub type host_flavor_t = integer_t;
 pub type host_info64_t = *mut integer_t;
 pub type processor_flavor_t = ::c_int;
 pub type thread_flavor_t = natural_t;
-pub type thread_inspect_t = mach_port_t;
+pub type thread_inspect_t = ::mach_port_t;
 pub type policy_t = ::c_int;
 pub type mach_vm_address_t = u64;
 pub type mach_vm_offset_t = u64;
@@ -90,7 +90,7 @@ pub type thread_identifier_info_data_t = thread_identifier_info;
 pub type thread_extended_info_t = *mut thread_extended_info;
 pub type thread_extended_info_data_t = thread_extended_info;
 
-pub type thread_t = mach_port_t;
+pub type thread_t = ::mach_port_t;
 pub type thread_policy_flavor_t = natural_t;
 pub type thread_policy_t = *mut integer_t;
 pub type thread_latency_qos_t = integer_t;
@@ -120,7 +120,7 @@ pub type vm_statistics_data_t = vm_statistics;
 pub type vm_statistics64_t = *mut vm_statistics64;
 pub type vm_statistics64_data_t = vm_statistics64;
 
-pub type task_t = mach_port_t;
+pub type task_t = ::mach_port_t;
 
 pub type sysdir_search_path_enumeration_state = ::c_uint;
 
@@ -4302,6 +4302,9 @@ pub const PROC_PIDTASKINFO: ::c_int = 4;
 pub const PROC_PIDTHREADINFO: ::c_int = 5;
 pub const PROC_PIDVNODEPATHINFO: ::c_int = 9;
 pub const PROC_PIDPATHINFO_MAXSIZE: ::c_int = 4096;
+pub const PROC_CSM_ALL: ::c_uint = 0x0001;
+pub const PROC_CSM_NOSMT: ::c_uint = 0x0002;
+pub const PROC_CSM_TECS: ::c_uint = 0x0004;
 pub const MAXCOMLEN: usize = 16;
 pub const MAXTHREADNAMESIZE: usize = 64;
 
@@ -4873,6 +4876,9 @@ extern "C" {
         thread: ::pthread_t,
         key: ::pthread_key_t,
     ) -> *mut ::c_void;
+    pub fn pthread_jit_write_protect_np(enabled: ::c_int);
+    pub fn pthread_jit_write_protect_supported_np() -> ::c_int;
+    pub fn pthread_cpu_number_np(cpu_number_out: *mut ::size_t) -> ::c_int;
 
     pub fn thread_policy_set(
         thread: thread_t,
@@ -5246,6 +5252,12 @@ extern "C" {
     pub fn proc_kmsgbuf(buffer: *mut ::c_void, buffersize: u32) -> ::c_int;
     pub fn proc_libversion(major: *mut ::c_int, mintor: *mut ::c_int) -> ::c_int;
     pub fn proc_pid_rusage(pid: ::c_int, flavor: ::c_int, buffer: *mut rusage_info_t) -> ::c_int;
+
+    // Available from Big Sur
+    pub fn proc_set_no_smt() -> ::c_int;
+    pub fn proc_setthread_no_smt() -> ::c_int;
+    pub fn proc_set_csm(flags: u32) -> ::c_int;
+    pub fn proc_setthread_csm(flags: u32) -> ::c_int;
     /// # Notes
     ///
     /// `id` is of type [`uuid_t`].
@@ -5293,11 +5305,14 @@ extern "C" {
         out_processor_infoCnt: *mut mach_msg_type_number_t,
     ) -> ::kern_return_t;
 
-    pub static mut mach_task_self_: mach_port_t;
-    pub fn task_for_pid(host: mach_port_t, pid: ::pid_t, task: *mut mach_port_t)
-        -> ::kern_return_t;
+    pub static mut mach_task_self_: ::mach_port_t;
+    pub fn task_for_pid(
+        host: ::mach_port_t,
+        pid: ::pid_t,
+        task: *mut ::mach_port_t,
+    ) -> ::kern_return_t;
     pub fn task_info(
-        host: mach_port_t,
+        host: ::mach_port_t,
         flavor: task_flavor_t,
         task_info_out: task_info_t,
         task_info_count: *mut mach_msg_type_number_t,
@@ -5322,7 +5337,7 @@ extern "C" {
     pub static vm_page_size: vm_size_t;
 }
 
-pub unsafe fn mach_task_self() -> mach_port_t {
+pub unsafe fn mach_task_self() -> ::mach_port_t {
     mach_task_self_
 }
 

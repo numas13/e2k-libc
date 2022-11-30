@@ -1491,6 +1491,8 @@ pub const PTHREAD_MUTEX_NORMAL: ::c_int = 0;
 pub const PTHREAD_MUTEX_RECURSIVE: ::c_int = 1;
 pub const PTHREAD_MUTEX_ERRORCHECK: ::c_int = 2;
 pub const PTHREAD_MUTEX_DEFAULT: ::c_int = PTHREAD_MUTEX_NORMAL;
+pub const PTHREAD_MUTEX_STALLED: ::c_int = 0;
+pub const PTHREAD_MUTEX_ROBUST: ::c_int = 1;
 pub const PTHREAD_PROCESS_PRIVATE: ::c_int = 0;
 pub const PTHREAD_PROCESS_SHARED: ::c_int = 1;
 pub const __SIZEOF_PTHREAD_COND_T: usize = 48;
@@ -1506,6 +1508,8 @@ pub const SCHED_BATCH: ::c_int = 3;
 pub const SCHED_IDLE: ::c_int = 5;
 
 pub const SCHED_RESET_ON_FORK: ::c_int = 0x40000000;
+
+pub const CLONE_PIDFD: ::c_int = 0x1000;
 
 // netinet/in.h
 // NOTE: These are in addition to the constants defined in src/unix/mod.rs
@@ -1815,6 +1819,10 @@ pub const CMSPAR: ::tcflag_t = 0o10000000000;
 pub const MFD_CLOEXEC: ::c_uint = 0x0001;
 pub const MFD_ALLOW_SEALING: ::c_uint = 0x0002;
 pub const MFD_HUGETLB: ::c_uint = 0x0004;
+
+// linux/close_range.h
+pub const CLOSE_RANGE_UNSHARE: ::c_uint = 1 << 1;
+pub const CLOSE_RANGE_CLOEXEC: ::c_uint = 1 << 2;
 
 // these are used in the p_type field of Elf32_Phdr and Elf64_Phdr, which has
 // the type Elf32Word and Elf64Word respectively. Luckily, both of those are u32
@@ -2388,6 +2396,8 @@ pub const NETLINK_TX_RING: ::c_int = 7;
 pub const NETLINK_LISTEN_ALL_NSID: ::c_int = 8;
 pub const NETLINK_LIST_MEMBERSHIPS: ::c_int = 9;
 pub const NETLINK_CAP_ACK: ::c_int = 10;
+pub const NETLINK_EXT_ACK: ::c_int = 11;
+pub const NETLINK_GET_STRICT_CHK: ::c_int = 12;
 
 pub const NLA_F_NESTED: ::c_int = 1 << 15;
 pub const NLA_F_NET_BYTEORDER: ::c_int = 1 << 14;
@@ -3622,6 +3632,7 @@ extern "C" {
         timeout: *const ::timespec,
         sigmask: *const sigset_t,
     ) -> ::c_int;
+    pub fn pthread_mutex_consistent(mutex: *mut pthread_mutex_t) -> ::c_int;
     pub fn pthread_mutex_timedlock(
         lock: *mut pthread_mutex_t,
         abstime: *const ::timespec,
@@ -3736,6 +3747,14 @@ extern "C" {
     pub fn pthread_mutexattr_getpshared(
         attr: *const pthread_mutexattr_t,
         pshared: *mut ::c_int,
+    ) -> ::c_int;
+    pub fn pthread_mutexattr_getrobust(
+        attr: *const pthread_mutexattr_t,
+        robustness: *mut ::c_int,
+    ) -> ::c_int;
+    pub fn pthread_mutexattr_setrobust(
+        attr: *mut pthread_mutexattr_t,
+        robustness: ::c_int,
     ) -> ::c_int;
     pub fn popen(command: *const c_char, mode: *const c_char) -> *mut ::FILE;
     pub fn faccessat(

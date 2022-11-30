@@ -2447,6 +2447,8 @@ pub const SCHED_DEADLINE: ::c_int = 6;
 
 pub const SCHED_RESET_ON_FORK: ::c_int = 0x40000000;
 
+pub const CLONE_PIDFD: ::c_int = 0x1000;
+
 // bits/seek_constants.h
 pub const SEEK_DATA: ::c_int = 3;
 pub const SEEK_HOLE: ::c_int = 4;
@@ -2480,6 +2482,12 @@ f! {
         }
     }
 
+    pub fn CPU_ALLOC_SIZE(count: ::c_int) -> ::size_t {
+        let _dummy: cpu_set_t = ::mem::zeroed();
+        let size_in_bits = 8 * ::mem::size_of_val(&_dummy.__bits[0]);
+        ((count as ::size_t + size_in_bits - 1) / 8) as ::size_t
+    }
+
     pub fn CPU_ZERO(cpuset: &mut cpu_set_t) -> () {
         for slot in cpuset.__bits.iter_mut() {
             *slot = 0;
@@ -2487,28 +2495,44 @@ f! {
     }
 
     pub fn CPU_SET(cpu: usize, cpuset: &mut cpu_set_t) -> () {
-        let size_in___bits = 8 * ::mem::size_of_val(&cpuset.__bits[0]);
-        let (idx, offset) = (cpu / size_in___bits, cpu % size_in___bits);
+        let size_in_bits
+            = 8 * ::mem::size_of_val(&cpuset.__bits[0]); // 32, 64 etc
+        let (idx, offset) = (cpu / size_in_bits, cpu % size_in_bits);
         cpuset.__bits[idx] |= 1 << offset;
         ()
     }
 
     pub fn CPU_CLR(cpu: usize, cpuset: &mut cpu_set_t) -> () {
-        let size_in___bits = 8 * ::mem::size_of_val(&cpuset.__bits[0]);
-        let (idx, offset) = (cpu / size_in___bits, cpu % size_in___bits);
+        let size_in_bits
+            = 8 * ::mem::size_of_val(&cpuset.__bits[0]); // 32, 64 etc
+        let (idx, offset) = (cpu / size_in_bits, cpu % size_in_bits);
         cpuset.__bits[idx] &= !(1 << offset);
         ()
     }
 
     pub fn CPU_ISSET(cpu: usize, cpuset: &cpu_set_t) -> bool {
-        let size_in___bits = 8 * ::mem::size_of_val(&cpuset.__bits[0]);
-        let (idx, offset) = (cpu / size_in___bits, cpu % size_in___bits);
+        let size_in_bits = 8 * ::mem::size_of_val(&cpuset.__bits[0]);
+        let (idx, offset) = (cpu / size_in_bits, cpu % size_in_bits);
         0 != (cpuset.__bits[idx] & (1 << offset))
+    }
+
+    pub fn CPU_COUNT_S(size: usize, cpuset: &cpu_set_t) -> ::c_int {
+        let mut s: u32 = 0;
+        let size_of_mask = ::mem::size_of_val(&cpuset.__bits[0]);
+        for i in cpuset.__bits[..(size / size_of_mask)].iter() {
+            s += i.count_ones();
+        };
+        s as ::c_int
+    }
+
+    pub fn CPU_COUNT(cpuset: &cpu_set_t) -> ::c_int {
+        CPU_COUNT_S(::mem::size_of::<cpu_set_t>(), cpuset)
     }
 
     pub fn CPU_EQUAL(set1: &cpu_set_t, set2: &cpu_set_t) -> bool {
         set1.__bits == set2.__bits
     }
+
     pub fn major(dev: ::dev_t) -> ::c_int {
         ((dev >> 8) & 0xfff) as ::c_int
     }

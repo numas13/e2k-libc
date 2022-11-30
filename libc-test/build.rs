@@ -1176,8 +1176,10 @@ fn test_dragonflybsd(target: &str) {
         "ifaddrs.h",
         "langinfo.h",
         "limits.h",
+        "link.h",
         "locale.h",
         "mqueue.h",
+        "net/bpf.h",
         "net/if.h",
         "net/if_arp.h",
         "net/if_dl.h",
@@ -1206,8 +1208,10 @@ fn test_dragonflybsd(target: &str) {
         "sys/ioctl.h",
         "sys/ipc.h",
         "sys/ktrace.h",
+        "sys/malloc.h",
         "sys/mman.h",
         "sys/mount.h",
+        "sys/procctl.h",
         "sys/ptrace.h",
         "sys/resource.h",
         "sys/rtprio.h",
@@ -1219,6 +1223,7 @@ fn test_dragonflybsd(target: &str) {
         "sys/sysctl.h",
         "sys/time.h",
         "sys/times.h",
+        "sys/timex.h",
         "sys/types.h",
         "sys/uio.h",
         "sys/un.h",
@@ -1250,6 +1255,9 @@ fn test_dragonflybsd(target: &str) {
             t if is_union => format!("union {}", t),
 
             t if t.ends_with("_t") => t.to_string(),
+
+            // sigval is a struct in Rust, but a union in C:
+            "sigval" => format!("union sigval"),
 
             // put `struct` in front of all structs:.
             t if is_struct => format!("struct {}", t),
@@ -1284,9 +1292,6 @@ fn test_dragonflybsd(target: &str) {
 
     cfg.skip_struct(move |ty| {
         match ty {
-            // This is actually a union, not a struct
-            "sigval" => true,
-
             // FIXME: These are tested as part of the linux_fcntl tests since
             // there are header conflicts when including them with all the other
             // structs.
@@ -1331,7 +1336,7 @@ fn test_dragonflybsd(target: &str) {
         // skip those that are manually verified
         match name {
             // FIXME: https://github.com/rust-lang/libc/issues/1272
-            "execv" | "execve" | "execvp" => true,
+            "execv" | "execve" | "execvp" | "fexecve" => true,
 
             "getrlimit" | "getrlimit64" |    // non-int in 1st arg
             "setrlimit" | "setrlimit64" |    // non-int in 1st arg
@@ -1809,6 +1814,7 @@ fn test_freebsd(target: &str) {
                 "sys/capsicum.h",
                 [freebsdlast]:"sys/auxv.h",
                 "sys/cpuset.h",
+                [freebsdlast]:"sys/domainset.h",
                 "sys/event.h",
                 "sys/extattr.h",
                 "sys/file.h",
@@ -1835,6 +1841,7 @@ fn test_freebsd(target: &str) {
                 "sys/times.h",
                 "sys/timex.h",
                 "sys/types.h",
+                "kvm.h", // must be after "sys/types.h"
                 "sys/ucontext.h",
                 "sys/uio.h",
                 "sys/ktrace.h",
@@ -1893,10 +1900,10 @@ fn test_freebsd(target: &str) {
 
     cfg.skip_const(move |name| {
         match name {
-            // These constants are to be introduced in yet-unreleased FreeBSD 12.2.
+            // These constants were introduced in FreeBSD 13:
             "F_ADD_SEALS" | "F_GET_SEALS" | "F_SEAL_SEAL" | "F_SEAL_SHRINK" | "F_SEAL_GROW"
             | "F_SEAL_WRITE"
-                if Some(12) <= freebsd_ver =>
+                if Some(13) > freebsd_ver =>
             {
                 true
             }
@@ -1910,6 +1917,7 @@ fn test_freebsd(target: &str) {
             | "IPV6_ORIGDSTADDR"
             | "IPV6_RECVORIGDSTADDR"
             | "NI_NUMERICSCOPE"
+            | "SO_DOMAIN"
                 if Some(11) == freebsd_ver =>
             {
                 true
@@ -1980,10 +1988,41 @@ fn test_freebsd(target: &str) {
             // commit/06b00ceaa914a3907e4e27bad924f44612bae1d7
             "MINCORE_SUPER" if Some(13) == freebsd_ver => true,
 
+            // Added in FreeBSD 12.0
+            "EINTEGRITY" if Some(11) == freebsd_ver => true,
+
             // This was increased to 97 in FreeBSD 12.2 and 13.
             // https://github.com/freebsd/freebsd/
             // commit/72a21ba0f62da5e86a1c0b462aeb3f5ff849a1b7
             "ELAST" if Some(12) == freebsd_ver => true,
+
+            // Added in FreeBSD 12.0 (r331279)
+            "GRND_NONBLOCK" | "GRND_RANDOM" if Some(11) == freebsd_ver => true,
+            // Added in FreeBSD 13.0 (r356667)
+            "GRND_INSECURE" if Some(13) > freebsd_ver => true,
+
+            // Added in FreeBSD 12.1 (r343964 and r345228)
+            "PROC_ASLR_CTL" | "PROC_ASLR_STATUS" | "PROC_PROCCTL_MD_MIN"
+                if Some(11) == freebsd_ver =>
+            {
+                true
+            }
+
+            // Added in FreeBSD 13.0 (r349609)
+            "PROC_PROTMAX_CTL" | "PROC_PROTMAX_STATUS" if Some(13) > freebsd_ver => true,
+
+            // Added in in FreeBSD 13.0 (r367776 and r367287)
+            "SCM_CREDS2" | "LOCAL_CREDS_PERSISTENT" if Some(13) > freebsd_ver => true,
+
+            _ => false,
+        }
+    });
+
+    cfg.skip_type(move |ty| {
+        match ty {
+            // the struct "__kvm" is quite tricky to bind so since we only use a pointer to it
+            // for now, it doesn't matter too much...
+            "kvm_t" => true,
 
             _ => false,
         }
@@ -2082,6 +2121,21 @@ fn test_freebsd(target: &str) {
             // a_un field is a union
             ("Elf32_Auxinfo", "a_un") => true,
             ("Elf64_Auxinfo", "a_un") => true,
+
+            // FIXME: structs too complicated to bind for now...
+            ("kinfo_proc", "ki_paddr") => true,
+            ("kinfo_proc", "ki_addr") => true,
+            ("kinfo_proc", "ki_tracep") => true,
+            ("kinfo_proc", "ki_textvp") => true,
+            ("kinfo_proc", "ki_fd") => true,
+            ("kinfo_proc", "ki_vmspace") => true,
+            ("kinfo_proc", "ki_pcb") => true,
+            ("kinfo_proc", "ki_tdaddr") => true,
+            ("kinfo_proc", "ki_pd") => true,
+
+            // We ignore this field because we needed to use a hack in order to make rust 1.19
+            // happy...
+            ("kinfo_proc", "ki_sparestrings") => true,
             _ => false,
         }
     });
@@ -2602,6 +2656,7 @@ fn test_linux(target: &str) {
         "linux/random.h",
         "linux/reboot.h",
         "linux/rtnetlink.h",
+        "linux/sched.h",
         "linux/seccomp.h",
         "linux/sockios.h",
         "linux/uinput.h",
@@ -2878,6 +2933,13 @@ fn test_linux(target: &str) {
             | "UDP_GRO"
             | "MAP_SYNC"
                 if e2k64 => true,
+
+            // FIXME: Requires more recent kernel headers (5.9 / 5.11):
+            | "CLOSE_RANGE_UNSHARE"
+            | "CLOSE_RANGE_CLOEXEC" => true,
+
+            // FIXME: Not currently available in headers on ARM, MIPS and musl.
+            "NETLINK_GET_STRICT_CHK" if arm || mips || musl => true,
 
             // kernel constants not available in uclibc 1.0.34
             | "ADDR_COMPAT_LAYOUT"

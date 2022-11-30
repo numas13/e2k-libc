@@ -257,6 +257,7 @@ CLONE_NEWUSER
 CLONE_NEWUTS
 CLONE_PARENT
 CLONE_PARENT_SETTID
+CLONE_PIDFD
 CLONE_PTRACE
 CLONE_SETTLS
 CLONE_SIGHAND
@@ -265,6 +266,8 @@ CLONE_THREAD
 CLONE_UNTRACED
 CLONE_VFORK
 CLONE_VM
+CLOSE_RANGE_CLOEXEC
+CLOSE_RANGE_UNSHARE
 CMSG_DATA
 CMSG_FIRSTHDR
 CMSG_LEN
@@ -1198,9 +1201,11 @@ NETLINK_CRYPTO
 NETLINK_DNRTMSG
 NETLINK_DROP_MEMBERSHIP
 NETLINK_ECRYPTFS
+NETLINK_EXT_ACK
 NETLINK_FIB_LOOKUP
 NETLINK_FIREWALL
 NETLINK_GENERIC
+NETLINK_GET_STRICT_CHK
 NETLINK_INET_DIAG
 NETLINK_IP6_FW
 NETLINK_ISCSI
@@ -2897,9 +2902,12 @@ pthread_getattr_np
 pthread_getcpuclockid
 pthread_getschedparam
 pthread_kill
+pthread_mutex_consistent
 pthread_mutex_timedlock
 pthread_mutexattr_getpshared
 pthread_mutexattr_setpshared
+pthread_mutexattr_getrobust
+pthread_mutexattr_setrobust
 pthread_rwlockattr_setpshared
 pthread_setaffinity_np
 pthread_setschedparam
