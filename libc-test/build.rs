@@ -199,6 +199,7 @@ fn test_apple(target: &str) {
         "locale.h",
         "mach-o/dyld.h",
         "mach/mach_init.h",
+        "mach/mach.h",
         "mach/mach_time.h",
         "mach/mach_types.h",
         "mach/mach_vm.h",
@@ -233,6 +234,7 @@ fn test_apple(target: &str) {
         "stdio.h",
         "stdlib.h",
         "string.h",
+        "sysdir.h",
         "sys/attr.h",
         "sys/clonefile.h",
         "sys/event.h",
@@ -831,6 +833,9 @@ fn test_solarish(target: &str) {
     });
 
     cfg.skip_struct(move |ty| {
+        if ty.starts_with("__c_anonymous_") {
+            return true;
+        }
         // the union handling is a mess
         if ty.contains("door_desc_t_") {
             return true;
@@ -1029,6 +1034,9 @@ fn test_netbsd(target: &str) {
     });
 
     cfg.skip_type(move |ty| {
+        if ty.starts_with("__c_anonymous_") {
+            return true;
+        }
         match ty {
             // FIXME: sighandler_t is crazy across platforms
             "sighandler_t" => true,
@@ -1199,11 +1207,11 @@ fn test_dragonflybsd(target: &str) {
         "termios.h",
         "time.h",
         "ucontext.h",
-        "ufs/ufs/quota.h",
         "unistd.h",
         "util.h",
         "utime.h",
         "utmpx.h",
+        "vfs/ufs/quota.h",
         "wchar.h",
         "iconv.h",
     }
@@ -1378,9 +1386,7 @@ fn test_wasi(target: &str) {
     cfg.type_name(move |ty, is_struct, is_union| match ty {
         "FILE" | "fd_set" | "DIR" => ty.to_string(),
         t if is_union => format!("union {}", t),
-        t if t.starts_with("__wasi") && t.ends_with("_u") => {
-            format!("union {}", t)
-        }
+        t if t.starts_with("__wasi") && t.ends_with("_u") => format!("union {}", t),
         t if t.starts_with("__wasi") && is_struct => format!("struct {}", t),
         t if t.ends_with("_t") => t.to_string(),
         t if is_struct => format!("struct {}", t),
@@ -2796,6 +2802,9 @@ fn test_linux(target: &str) {
             // Require Linux kernel 5.6:
             "VMADDR_CID_LOCAL" => true,
 
+            // Requires Linux kernel 5.7:
+            "MREMAP_DONTUNMAP" => true,
+
             // IPPROTO_MAX was increased in 5.6 for IPPROTO_MPTCP:
             | "IPPROTO_MAX"
             | "IPPROTO_MPTCP" => true,
@@ -3431,6 +3440,10 @@ fn test_haiku(target: &str) {
             ("sem_t", "named_sem_id") => true,
             ("sigaction", "sa_sigaction") => true,
             ("sigevent", "sigev_value") => true,
+            ("fpu_state", "_fpreg") => true,
+            // these fields have a simplified data definition in libc
+            ("fpu_state", "_xmm") => true,
+            ("savefpu", "_fp_ymm") => true,
 
             // skip these enum-type fields
             ("thread_info", "state") => true,

@@ -2424,6 +2424,8 @@ pub const SCHED_BATCH: ::c_int = 3;
 pub const SCHED_IDLE: ::c_int = 5;
 pub const SCHED_DEADLINE: ::c_int = 6;
 
+pub const SCHED_RESET_ON_FORK: ::c_int = 0x40000000;
+
 // bits/seek_constants.h
 pub const SEEK_DATA: ::c_int = 3;
 pub const SEEK_HOLE: ::c_int = 4;
@@ -2437,6 +2439,10 @@ pub const PF_VSOCK: ::c_int = AF_VSOCK;
 // sys/system_properties.h
 pub const PROP_VALUE_MAX: ::c_int = 92;
 pub const PROP_NAME_MAX: ::c_int = 32;
+
+// sys/prctl.h
+pub const PR_SET_VMA: ::c_int = 0x53564d41;
+pub const PR_SET_VMA_ANON_NAME: ::c_int = 0;
 
 f! {
     pub fn CMSG_NXTHDR(mhdr: *const msghdr,
@@ -2570,6 +2576,9 @@ extern "C" {
     pub fn __sched_cpucount(setsize: ::size_t, set: *const cpu_set_t) -> ::c_int;
     pub fn sched_getcpu() -> ::c_int;
     pub fn mallinfo() -> ::mallinfo;
+    // available from API 23
+    pub fn malloc_info(options: ::c_int, stream: *mut ::FILE) -> ::c_int;
+
     pub fn malloc_usable_size(ptr: *const ::c_void) -> ::size_t;
 
     pub fn utmpname(name: *const ::c_char) -> ::c_int;
@@ -2914,6 +2923,8 @@ extern "C" {
     pub fn arc4random_buf(__buf: *mut ::c_void, __n: ::size_t);
 
     pub fn reallocarray(ptr: *mut ::c_void, nmemb: ::size_t, size: ::size_t) -> *mut ::c_void;
+
+    pub fn pthread_getcpuclockid(thread: ::pthread_t, clk_id: *mut ::clockid_t) -> ::c_int;
 }
 
 cfg_if! {

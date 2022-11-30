@@ -1108,6 +1108,9 @@ SAE_ASSOCID_ANY
 SAE_CONNID_ALL
 SAE_CONNID_ANY
 SCALE_PPM
+SCHED_OTHER
+SCHED_FIFO
+SCHED_RR
 SCM_CREDS
 SCM_RIGHTS
 SCM_TIMESTAMP
@@ -1917,6 +1920,10 @@ syscall
 sysctl
 sysctlbyname
 sysctlnametomib
+sysdir_get_next_search_path_enumeration
+sysdir_search_path_directory_t
+sysdir_search_path_domain_mask_t
+sysdir_start_search_path_enumeration
 telldir
 thread_basic_info_t
 thread_extended_info_t

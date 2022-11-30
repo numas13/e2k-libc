@@ -321,6 +321,18 @@ s! {
         pub uid: ::uid_t,
         pub gid: ::gid_t,
     }
+
+    pub struct sockaddr_dl {
+        pub sdl_len: u8,
+        pub sdl_family: u8,
+        pub sdl_e_type: u16,
+        pub sdl_index: u32,
+        pub sdl_type: u8,
+        pub sdl_nlen: u8,
+        pub sdl_alen: u8,
+        pub sdl_slen: u8,
+        pub sdl_data: [u8; 46],
+    }
 }
 
 s_no_extra_traits! {
@@ -549,6 +561,7 @@ pub const RLIMIT_FSIZE: ::c_int = 3;
 pub const RLIMIT_NOFILE: ::c_int = 4;
 pub const RLIMIT_STACK: ::c_int = 5;
 pub const RLIMIT_AS: ::c_int = 6;
+pub const RLIM_INFINITY: ::c_ulong = 0xffffffff;
 // Haiku specific
 pub const RLIMIT_NOVMON: ::c_int = 7;
 pub const RLIM_NLIMITS: ::c_int = 8;
@@ -1421,6 +1434,8 @@ extern "C" {
         attr: *mut pthread_condattr_t,
         clock_id: ::clockid_t,
     ) -> ::c_int;
+    pub fn valloc(numBytes: ::size_t) -> *mut ::c_void;
+    pub fn malloc_usable_size(ptr: *mut ::c_void) -> ::size_t;
     pub fn memalign(align: ::size_t, size: ::size_t) -> *mut ::c_void;
     pub fn setgroups(ngroups: ::c_int, ptr: *const ::gid_t) -> ::c_int;
     pub fn ioctl(fd: ::c_int, request: ::c_ulong, ...) -> ::c_int;
@@ -1557,6 +1572,21 @@ cfg_if! {
     } else {
         mod b32;
         pub use self::b32::*;
+    }
+}
+
+cfg_if! {
+    if #[cfg(target_arch = "x86")] {
+        // TODO
+        // mod x86;
+        // pub use self::x86::*;
+    } else if #[cfg(target_arch = "x86_64")] {
+        mod x86_64;
+        pub use self::x86_64::*;
+    } else if #[cfg(target_arch = "aarch64")] {
+        // TODO
+        // mod aarch64;
+        // pub use self::aarch64::*;
     }
 }
 
