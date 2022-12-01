@@ -316,6 +316,9 @@ fn test_apple(target: &str) {
             // close calls the close_nocancel system call
             "close" => true,
 
+            // macOs 12 minimum
+            "backtrace_async" => true,
+
             _ => false,
         }
     });
@@ -486,6 +489,7 @@ fn test_openbsd(target: &str) {
             "KERN_USERMOUNT" | "KERN_ARND" => true,
             // Good chance it's going to be wrong depending on the host release
             "KERN_MAXID" | "NET_RT_MAXID" => true,
+            "EV_SYSFLAGS" => true,
             _ => false,
         }
     });
@@ -1536,6 +1540,7 @@ fn test_android(target: &str) {
                "sys/ucontext.h",
                "sys/uio.h",
                "sys/un.h",
+               "sys/user.h",
                "sys/utsname.h",
                "sys/vfs.h",
                "sys/xattr.h",
@@ -1562,6 +1567,7 @@ fn test_android(target: &str) {
                 "linux/elf.h",
                 "linux/errqueue.h",
                 "linux/falloc.h",
+                "linux/filter.h",
                 "linux/futex.h",
                 "linux/fs.h",
                 "linux/genetlink.h",
@@ -2159,6 +2165,18 @@ fn test_freebsd(target: &str) {
             // Added in FreeBSD 14.
             "PT_COREDUMP" | "PC_ALL" | "PC_COMPRESS" if Some(14) > freebsd_ver => true,
 
+            // Added in FreeBSD 14.
+            "F_KINFO" => true, // FIXME: depends how frequent freebsd 14 is updated on CI, this addition went this week only.
+            "SHM_RENAME_NOREPLACE"
+            | "SHM_RENAME_EXCHANGE"
+            | "MFD_CLOEXEC"
+            | "MFD_ALLOW_SEALING"
+            | "MFD_HUGETLB"
+                if Some(13) > freebsd_ver =>
+            {
+                true
+            }
+
             _ => false,
         }
     });
@@ -2238,6 +2256,9 @@ fn test_freebsd(target: &str) {
 
             // This is not available in FreeBSD 12.
             "SOCKCRED2SIZE" if Some(13) > freebsd_ver => true,
+
+            // Those are not available in FreeBSD 12.
+            "memfd_create" | "shm_rename" if Some(13) > freebsd_ver => true,
 
             _ => false,
         }
@@ -2815,6 +2836,7 @@ fn test_linux(target: &str) {
         "linux/dccp.h",
         "linux/errqueue.h",
         "linux/falloc.h",
+        "linux/filter.h",
         "linux/fs.h",
         "linux/futex.h",
         "linux/genetlink.h",
@@ -2840,6 +2862,7 @@ fn test_linux(target: &str) {
         "linux/netlink.h",
         // FIXME: requires more recent kernel headers:
         // "linux/openat2.h",
+        [!musl]: "linux/ptrace.h",
         "linux/quota.h",
         "linux/random.h",
         "linux/reboot.h",
@@ -3152,10 +3175,6 @@ fn test_linux(target: &str) {
             "NETLINK_GET_STRICT_CHK" if arm || mips || musl => true,
 
             // kernel constants not available in uclibc 1.0.34
-            | "ADDR_COMPAT_LAYOUT"
-            | "ADDR_LIMIT_3GB"
-            | "ADDR_NO_RANDOMIZE"
-            | "CLONE_NEWCGROUP"
             | "EXTPROC"
             | "FAN_MARK_FILESYSTEM"
             | "FAN_MARK_INODE"
@@ -3166,13 +3185,7 @@ fn test_linux(target: &str) {
             | "IPV6_PMTUDISC_INTERFACE"
             | "IPV6_PMTUDISC_OMIT"
             | "IPV6_ROUTER_ALERT_ISOLATE"
-            | "O_TMPFILE"
             | "PACKET_MR_UNICAST"
-            | "PTRACE_EVENT_STOP"
-            | "PTRACE_O_EXITKILL"
-            | "PTRACE_O_SUSPEND_SECCOMP"
-            | "PTRACE_PEEKSIGINFO"
-            | "READ_IMPLIES_EXEC"
             | "RUSAGE_THREAD"
             | "SHM_EXEC"
             | "UDP_GRO"
@@ -3181,6 +3194,9 @@ fn test_linux(target: &str) {
 
             // headers conflicts with linux/pidfd.h
             "PIDFD_NONBLOCK" => true,
+
+            // is a private value for kernel usage normally
+            "FUSE_SUPER_MAGIC" => true,
 
             _ => false,
         }
@@ -3325,7 +3341,9 @@ fn test_linux(target: &str) {
         // FIXME: It now takes mode_t since glibc 2.31 on some targets.
         (struct_ == "ipc_perm" && field == "mode"
             && ((x86_64 || i686 || arm || riscv64) && gnu || x86_64_gnux32)
-        )
+        ) ||
+        // the `u` field is in fact an anonymous union
+        (gnu && struct_ == "ptrace_syscall_info" && (field == "u" || field == "pad"))
     });
 
     cfg.skip_roundtrip(move |s| match s {

@@ -1055,8 +1055,10 @@ pub const EPOLL_CTL_ADD: ::c_int = 1;
 pub const EPOLL_CTL_MOD: ::c_int = 3;
 pub const EPOLL_CTL_DEL: ::c_int = 2;
 
+pub const MNT_FORCE: ::c_int = 0x1;
 pub const MNT_DETACH: ::c_int = 0x2;
 pub const MNT_EXPIRE: ::c_int = 0x4;
+pub const UMOUNT_NOFOLLOW: ::c_int = 0x8;
 
 pub const Q_GETFMT: ::c_int = 0x800004;
 pub const Q_GETINFO: ::c_int = 0x800005;
@@ -1071,8 +1073,6 @@ pub const QIF_LIMITS: u32 = 5;
 pub const QIF_USAGE: u32 = 10;
 pub const QIF_TIMES: u32 = 48;
 pub const QIF_ALL: u32 = 63;
-
-pub const MNT_FORCE: ::c_int = 0x1;
 
 pub const Q_SYNC: ::c_int = 0x800001;
 pub const Q_QUOTAON: ::c_int = 0x800002;
@@ -1173,6 +1173,7 @@ pub const PTRACE_O_TRACEEXIT: ::c_int = 0x00000040;
 pub const PTRACE_O_TRACESECCOMP: ::c_int = 0x00000080;
 pub const PTRACE_O_SUSPEND_SECCOMP: ::c_int = 0x00200000;
 pub const PTRACE_O_EXITKILL: ::c_int = 0x00100000;
+pub const PTRACE_O_MASK: ::c_int = 0x003000ff;
 
 // Wait extended result codes for the above trace options.
 pub const PTRACE_EVENT_FORK: ::c_int = 1;
@@ -1373,12 +1374,6 @@ pub const ARPHRD_IEEE802154: u16 = 804;
 
 pub const ARPHRD_VOID: u16 = 0xFFFF;
 pub const ARPHRD_NONE: u16 = 0xFFFE;
-
-cfg_if! {
-    if #[cfg(not(target_env = "uclibc"))] {
-        pub const PTRACE_O_MASK: ::c_int = 0x003000ff;
-    }
-}
 
 const_fn! {
     {const} fn CMSG_ALIGN(len: usize) -> usize {

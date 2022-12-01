@@ -666,6 +666,8 @@ HPFS_SUPER_MAGIC
 HUGETLBFS_MAGIC
 HUPCL
 IBSHIFT
+BLKSSZGET
+BLKPBSZGET
 ICANON
 ICRNL
 IEXTEN
@@ -2444,6 +2446,7 @@ _PC_REC_XFER_ALIGN
 _PC_SYMLINK_MAX
 _PC_SYNC_IO
 _PC_VDISABLE
+_POSIX_VDISABLE
 _SC_2_CHAR_TERM
 _SC_2_C_BIND
 _SC_2_C_DEV
@@ -2841,6 +2844,7 @@ intptr_t
 ioctl
 iovec
 ip_mreq
+ip_mreqn
 ip_mreq_source
 ipv6_mreq
 isalnum
@@ -3056,6 +3060,7 @@ pthread_spin_unlock
 pthread_spinlock_t
 pthread_t
 ptrace
+ptrace_peeksiginfo_args
 ptrdiff_t
 ptsname
 ptsname_r

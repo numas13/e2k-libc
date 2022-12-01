@@ -325,11 +325,6 @@ s! {
         pub sc_groups: [::gid_t; 1],
     }
 
-    pub struct accept_filter_arg {
-        pub af_name: [::c_char; 16],
-        af_arg: [[::c_char; 10]; 24],
-    }
-
     pub struct ptrace_vm_entry {
         pub pve_entry: ::c_int,
         pub pve_timestamp: ::c_int,
@@ -2163,9 +2158,9 @@ pub const CTL_P1003_1B_SEM_VALUE_MAX: ::c_int = 23;
 pub const CTL_P1003_1B_SIGQUEUE_MAX: ::c_int = 24;
 pub const CTL_P1003_1B_TIMER_MAX: ::c_int = 25;
 
-pub const TIOCGPTN: ::c_uint = 0x4004740f;
-pub const TIOCPTMASTER: ::c_uint = 0x2000741c;
-pub const TIOCSIG: ::c_uint = 0x2004745f;
+pub const TIOCGPTN: ::c_ulong = 0x4004740f;
+pub const TIOCPTMASTER: ::c_ulong = 0x2000741c;
+pub const TIOCSIG: ::c_ulong = 0x2004745f;
 pub const TIOCM_DCD: ::c_int = 0x40;
 pub const H4DISC: ::c_int = 0x7;
 
@@ -2969,8 +2964,6 @@ pub const SF_SNAPSHOT: ::c_ulong = 0x00200000;
 
 // fcntl commands
 pub const F_ADD_SEALS: ::c_int = 19;
-pub const F_DUP2FD: ::c_int = 10;
-pub const F_DUP2FD_CLOEXEC: ::c_int = 18;
 pub const F_GET_SEALS: ::c_int = 20;
 pub const F_OGETLK: ::c_int = 7;
 pub const F_OSETLK: ::c_int = 8;
@@ -2978,6 +2971,7 @@ pub const F_OSETLKW: ::c_int = 9;
 pub const F_RDAHEAD: ::c_int = 16;
 pub const F_READAHEAD: ::c_int = 15;
 pub const F_SETLK_REMOTE: ::c_int = 14;
+pub const F_KINFO: ::c_int = 22;
 
 // for use with F_ADD_SEALS
 pub const F_SEAL_GROW: ::c_int = 4;
@@ -3621,6 +3615,13 @@ pub const DST_CAN: ::c_int = 6;
 pub const CPUCLOCK_WHICH_PID: ::c_int = 0;
 pub const CPUCLOCK_WHICH_TID: ::c_int = 1;
 
+pub const MFD_CLOEXEC: ::c_uint = 0x00000001;
+pub const MFD_ALLOW_SEALING: ::c_uint = 0x00000002;
+pub const MFD_HUGETLB: ::c_uint = 0x00000004;
+
+pub const SHM_RENAME_NOREPLACE: ::c_int = 1 << 0;
+pub const SHM_RENAME_EXCHANGE: ::c_int = 1 << 1;
+
 const_fn! {
     {const} fn _ALIGN(p: usize) -> usize {
         (p + _ALIGNBYTES) & !_ALIGNBYTES
@@ -3715,6 +3716,17 @@ f! {
         let bitset_bits = ::mem::size_of::<::c_long>();
         let (idx, offset) = (cpu / bitset_bits, cpu % bitset_bits);
         0 != cpuset.__bits[idx] & (1 << offset)
+    }
+
+    pub fn CPU_COUNT(cpuset: &cpuset_t) -> ::c_int {
+        let mut s: u32 = 0;
+        let cpuset_size = ::mem::size_of::<cpuset_t>();
+        let bitset_bits = ::mem::size_of::<::c_long>();
+
+        for i in cpuset.__bits[..(cpuset_size / bitset_bits)].iter() {
+            s += i.count_ones();
+        };
+        s as ::c_int
     }
 
     pub fn SOCKCRED2SIZE(ngrps: usize) -> usize {
@@ -4000,9 +4012,8 @@ extern "C" {
 
     // sched.h linux compatibility api
     pub fn sched_getaffinity(pid: ::pid_t, cpusetsz: ::size_t, cpuset: *mut ::cpuset_t) -> ::c_int;
-    // FIXME: the first argument's type might not be correct, fix later if that changes.
     pub fn sched_setaffinity(
-        pid: ::c_int,
+        pid: ::pid_t,
         cpusetsz: ::size_t,
         cpuset: *const ::cpuset_t,
     ) -> ::c_int;
@@ -4151,6 +4162,13 @@ extern "C" {
 
     pub fn adjtime(arg1: *const ::timeval, arg2: *mut ::timeval) -> ::c_int;
     pub fn clock_getcpuclockid2(arg1: ::id_t, arg2: ::c_int, arg3: *mut clockid_t) -> ::c_int;
+
+    pub fn shm_rename(
+        path_from: *const ::c_char,
+        path_to: *const ::c_char,
+        flags: ::c_int,
+    ) -> ::c_int;
+    pub fn memfd_create(name: *const ::c_char, flags: ::c_uint) -> ::c_int;
 }
 
 #[link(name = "kvm")]

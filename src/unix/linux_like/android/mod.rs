@@ -73,6 +73,12 @@ s! {
         pub cmsg_type: ::c_int,
     }
 
+    pub struct ip_mreqn {
+        pub imr_multiaddr: ::in_addr,
+        pub imr_address: ::in_addr,
+        pub imr_ifindex: ::c_int,
+    }
+
     pub struct termios {
         pub c_iflag: ::tcflag_t,
         pub c_oflag: ::tcflag_t,
@@ -348,6 +354,12 @@ s! {
         pub arch: ::__u32,
         pub instruction_pointer: ::__u64,
         pub args: [::__u64; 6],
+    }
+
+    pub struct ptrace_peeksiginfo_args {
+        pub off: ::__u64,
+        pub flags: ::__u32,
+        pub nr: ::__s32,
     }
 }
 
@@ -805,6 +817,8 @@ pub const TFD_TIMER_ABSTIME: ::c_int = 1;
 pub const TFD_TIMER_CANCEL_ON_SET: ::c_int = 2;
 
 pub const USER_PROCESS: ::c_short = 7;
+
+pub const _POSIX_VDISABLE: ::cc_t = 0;
 
 // linux/falloc.h
 pub const FALLOC_FL_KEEP_SIZE: ::c_int = 0x01;
@@ -1539,6 +1553,9 @@ pub const B3000000: ::speed_t = 0o010015;
 pub const B3500000: ::speed_t = 0o010016;
 pub const B4000000: ::speed_t = 0o010017;
 pub const IBSHIFT: ::tcflag_t = 16;
+
+pub const BLKSSZGET: ::c_int = 0x1268;
+pub const BLKPBSZGET: ::c_int = 0x127B;
 
 pub const EAI_AGAIN: ::c_int = 2;
 pub const EAI_BADFLAGS: ::c_int = 3;
