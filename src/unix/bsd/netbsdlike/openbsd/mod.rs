@@ -401,6 +401,16 @@ s! {
         pub kve_inheritance: ::c_int,
         pub kve_flags: u8,
     }
+
+    pub struct ptrace_state {
+        pub pe_report_event: ::c_int,
+        pub pe_other_pid: ::pid_t,
+        pub pe_tid: ::pid_t,
+    }
+
+    pub struct ptrace_thread_state {
+        pub pts_tid: ::pid_t,
+    }
 }
 
 impl siginfo_t {
@@ -1428,6 +1438,11 @@ pub const PTHREAD_STACK_MIN: ::size_t = 1_usize << _MAX_PAGE_SHIFT;
 pub const MINSIGSTKSZ: ::size_t = 3_usize << _MAX_PAGE_SHIFT;
 pub const SIGSTKSZ: ::size_t = MINSIGSTKSZ + (1_usize << _MAX_PAGE_SHIFT) * 4;
 
+pub const PT_SET_EVENT_MASK: ::c_int = 12;
+pub const PT_GET_EVENT_MASK: ::c_int = 13;
+pub const PT_GET_PROCESS_STATE: ::c_int = 14;
+pub const PT_GET_THREAD_FIRST: ::c_int = 15;
+pub const PT_GET_THREAD_NEXT: ::c_int = 16;
 pub const PT_FIRSTMACH: ::c_int = 32;
 
 pub const SOCK_CLOEXEC: ::c_int = 0x8000;
@@ -1604,6 +1619,22 @@ extern "C" {
     pub fn freezero(ptr: *mut ::c_void, size: ::size_t);
     pub fn malloc_conceal(size: ::size_t) -> *mut ::c_void;
     pub fn calloc_conceal(nmemb: ::size_t, size: ::size_t) -> *mut ::c_void;
+}
+
+#[link(name = "execinfo")]
+extern "C" {
+    pub fn backtrace(addrlist: *mut *mut ::c_void, len: ::size_t) -> ::size_t;
+    pub fn backtrace_symbols(addrlist: *const *mut ::c_void, len: ::size_t) -> *mut *mut ::c_char;
+    pub fn backtrace_symbols_fd(
+        addrlist: *const *mut ::c_void,
+        len: ::size_t,
+        fd: ::c_int,
+    ) -> ::c_int;
+    pub fn backtrace_symbols_fmt(
+        addrlist: *const *mut ::c_void,
+        len: ::size_t,
+        fmt: *const ::c_char,
+    ) -> *mut *mut ::c_char;
 }
 
 cfg_if! {

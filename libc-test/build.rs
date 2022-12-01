@@ -300,6 +300,9 @@ fn test_apple(target: &str) {
             "KERN_KDENABLE_BG_TRACE" | "KERN_KDDISABLE_BG_TRACE" => true,
             // FIXME: the value has been changed since Catalina (0xffff0000 -> 0x3fff0000).
             "SF_SETTABLE" => true,
+
+            // FIXME: XCode 13.1 doesn't have it.
+            "TIOCREMOTE" => true,
             _ => false,
         }
     });
@@ -393,6 +396,7 @@ fn test_openbsd(target: &str) {
     headers! { cfg:
         "elf.h",
         "errno.h",
+        "execinfo.h",
         "fcntl.h",
         "limits.h",
         "link.h",
@@ -426,6 +430,7 @@ fn test_openbsd(target: &str) {
         "string.h",
         "sys/file.h",
         "sys/ioctl.h",
+        "sys/ipc.h",
         "sys/mman.h",
         "sys/param.h",
         "sys/resource.h",
@@ -989,6 +994,7 @@ fn test_netbsd(target: &str) {
         "sys/file.h",
         "sys/ioctl.h",
         "sys/ioctl_compat.h",
+        "sys/ipc.h",
         "sys/ktrace.h",
         "sys/mman.h",
         "sys/mount.h",
@@ -1002,6 +1008,7 @@ fn test_netbsd(target: &str) {
         "sys/times.h",
         "sys/timex.h",
         "sys/ucontext.h",
+        "sys/ucred.h",
         "sys/uio.h",
         "sys/un.h",
         "sys/utsname.h",
@@ -1661,6 +1668,7 @@ fn test_android(target: &str) {
 
             // FIXME: conflicts with standard C headers and is tested in
             // `linux_termios.rs` below:
+            "IBSHIFT" => true,
             "TCGETS2" | "TCSETS2" | "TCSETSW2" | "TCSETSF2" => true,
 
             _ => false,
@@ -1753,6 +1761,7 @@ fn test_freebsd(target: &str) {
         Some(11) => cfg.cfg("freebsd11", None),
         Some(12) => cfg.cfg("freebsd12", None),
         Some(13) => cfg.cfg("freebsd13", None),
+        Some(14) => cfg.cfg("freebsd14", None),
         _ => &mut cfg,
     };
 
@@ -1843,6 +1852,7 @@ fn test_freebsd(target: &str) {
                 "sys/random.h",
                 "sys/resource.h",
                 "sys/rtprio.h",
+                "sys/sem.h",
                 "sys/shm.h",
                 "sys/socket.h",
                 "sys/stat.h",
@@ -1853,6 +1863,7 @@ fn test_freebsd(target: &str) {
                 "sys/times.h",
                 "sys/timex.h",
                 "sys/types.h",
+                "sys/proc.h",
                 "kvm.h", // must be after "sys/types.h"
                 "sys/ucontext.h",
                 "sys/uio.h",
@@ -1861,6 +1872,7 @@ fn test_freebsd(target: &str) {
                 "sys/user.h",
                 "sys/utsname.h",
                 "sys/uuid.h",
+                "sys/vmmeter.h",
                 "sys/wait.h",
                 "libprocstat.h",
                 "syslog.h",
@@ -2049,6 +2061,38 @@ fn test_freebsd(target: &str) {
             // Added in in FreeBSD 13.0 (r367776 and r367287)
             "SCM_CREDS2" | "LOCAL_CREDS_PERSISTENT" if Some(13) > freebsd_ver => true,
 
+            "VM_TOTAL" if Some(11) == freebsd_ver => true,
+
+            // Added in FreeBSD 14.
+            "KERN_STACKTOP" if Some(14) > freebsd_ver => true,
+            // Added in FreeBSD 13.
+            "KERN_PROC_SIGFASTBLK"
+            | "USER_LOCALBASE"
+            | "TDP_SIGFASTBLOCK"
+            | "TDP_UIOHELD"
+            | "TDP_SIGFASTPENDING"
+            | "TDP2_COMPAT32RB"
+            | "P2_PROTMAX_ENABLE"
+            | "P2_PROTMAX_DISABLE"
+            | "CTLFLAG_NEEDGIANT"
+            | "CTL_SYSCTL_NEXTNOSKIP"
+                if Some(13) > freebsd_ver =>
+            {
+                true
+            }
+            // Added in FreeBSD 12.
+            "KERN_MAXPHYS"
+            | "KVME_FLAG_USER_WIRED"
+            | "TDP2_SBPAGES"
+            | "P2_ASLR_ENABLE"
+            | "P2_ASLR_DISABLE"
+            | "P2_ASLR_IGNSTART"
+            | "P_TREE_GRPEXITED"
+                if Some(12) > freebsd_ver =>
+            {
+                true
+            }
+
             _ => false,
         }
     });
@@ -2079,6 +2123,9 @@ fn test_freebsd(target: &str) {
 
             // `ptrace_sc_ret` is not available in FreeBSD 11
             "ptrace_sc_ret" if Some(11) == freebsd_ver => true,
+
+            // obsolete version
+            "vmtotal" if Some(11) == freebsd_ver => true,
 
             _ => false,
         }
@@ -2174,6 +2221,9 @@ fn test_freebsd(target: &str) {
             // We ignore this field because we needed to use a hack in order to make rust 1.19
             // happy...
             ("kinfo_proc", "ki_sparestrings") => true,
+
+            // `__sem_base` is a private struct field
+            ("semid_ds", "__sem_base") => true,
             _ => false,
         }
     });
@@ -2690,6 +2740,8 @@ fn test_linux(target: &str) {
         "linux/netfilter_ipv6.h",
         "linux/netfilter_ipv6/ip6_tables.h",
         "linux/netlink.h",
+        // FIXME: requires more recent kernel headers:
+        // "linux/openat2.h",
         "linux/quota.h",
         "linux/random.h",
         "linux/reboot.h",
@@ -2720,6 +2772,9 @@ fn test_linux(target: &str) {
             "FILE" | "fd_set" | "Dl_info" | "DIR" | "Elf32_Phdr" | "Elf64_Phdr" | "Elf32_Shdr"
             | "Elf64_Shdr" | "Elf32_Sym" | "Elf64_Sym" | "Elf32_Ehdr" | "Elf64_Ehdr"
             | "Elf32_Chdr" | "Elf64_Chdr" => ty.to_string(),
+
+            "Ioctl" if gnu => "unsigned long".to_string(),
+            "Ioctl" => "int".to_string(),
 
             t if is_union => format!("union {}", t),
 
@@ -2778,6 +2833,9 @@ fn test_linux(target: &str) {
             // on Linux, this is a volatile int
             "pthread_spinlock_t" => true,
 
+            // For internal use only, to define architecture specific ioctl constants with a libc specific type.
+            "Ioctl" => true,
+
             _ => false,
         }
     });
@@ -2830,6 +2888,9 @@ fn test_linux(target: &str) {
 
             // Requires glibc 2.33 or newer.
             "mallinfo2" => true,
+
+            // Might differ between kernel versions
+            "open_how" => true,
 
             _ => false,
         }
@@ -2905,6 +2966,7 @@ fn test_linux(target: &str) {
             // FIXME: conflicts with glibc headers and is tested in
             // `linux_termios.rs` below:
             | "BOTHER"
+            | "IBSHIFT"
             | "TCGETS2"
             | "TCSETS2"
             | "TCSETSW2"
@@ -2979,6 +3041,14 @@ fn test_linux(target: &str) {
             // FIXME: Requires more recent kernel headers (5.9 / 5.11):
             | "CLOSE_RANGE_UNSHARE"
             | "CLOSE_RANGE_CLOEXEC" => true,
+
+            // FIXME: requires more recent kernel headers:
+            | "RESOLVE_BENEATH"
+            | "RESOLVE_CACHED"
+            | "RESOLVE_IN_ROOT"
+            | "RESOLVE_NO_MAGICLINKS"
+            | "RESOLVE_NO_SYMLINKS"
+            | "RESOLVE_NO_XDEV" => true,
 
             // FIXME: Not currently available in headers on ARM, MIPS and musl.
             "NETLINK_GET_STRICT_CHK" if arm || mips || musl => true,
@@ -3203,6 +3273,7 @@ fn test_linux(target: &str) {
 // This function tests APIs that are incompatible to test when other APIs
 // are included (e.g. because including both sets of headers clashes)
 fn test_linux_like_apis(target: &str) {
+    let gnu = target.contains("gnu");
     let musl = target.contains("musl");
     let linux = target.contains("linux");
     let emscripten = target.contains("emscripten");
@@ -3263,12 +3334,14 @@ fn test_linux_like_apis(target: &str) {
             .skip_static(|_| true)
             .skip_fn(|_| true)
             .skip_const(|c| match c {
-                "BOTHER" => false,
+                "BOTHER" | "IBSHIFT" => false,
                 "TCGETS2" | "TCSETS2" | "TCSETSW2" | "TCSETSF2" => false,
                 _ => true,
             })
             .skip_struct(|s| s != "termios2")
             .type_name(move |ty, is_struct, is_union| match ty {
+                "Ioctl" if gnu => "unsigned long".to_string(),
+                "Ioctl" => "int".to_string(),
                 t if is_struct => format!("struct {}", t),
                 t if is_union => format!("union {}", t),
                 t => t.to_string(),
@@ -3357,6 +3430,7 @@ fn which_freebsd() -> Option<i32> {
         s if s.starts_with("11") => Some(11),
         s if s.starts_with("12") => Some(12),
         s if s.starts_with("13") => Some(13),
+        s if s.starts_with("14") => Some(14),
         _ => None,
     }
 }

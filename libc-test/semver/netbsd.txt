@@ -1183,6 +1183,7 @@ forkpty
 freeifaddrs
 freelocale
 fsid_t
+ftok
 futimes
 getbootfile
 getbyteorder
@@ -1445,6 +1446,7 @@ sync
 syscall
 sysctl
 sysctlbyname
+sysctldesc
 telldir
 timer_create
 timer_delete
@@ -1466,6 +1468,7 @@ utmpx
 utmpxname
 utpname
 utrace
+uucred
 vm_size_t
 wait4
 waitid

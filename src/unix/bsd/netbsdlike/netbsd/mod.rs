@@ -343,6 +343,14 @@ s! {
         pub sc_groups: [::gid_t; 1],
     }
 
+    pub struct uucred {
+        pub cr_unused: ::c_ushort,
+        pub cr_uid: ::uid_t,
+        pub cr_gid: ::gid_t,
+        pub cr_ngroups: ::c_int,
+        pub cr_groups: [::gid_t; NGROUPS_MAX as usize],
+    }
+
     pub struct unpcbid {
         pub unp_pid: ::pid_t,
         pub unp_euid: ::uid_t,
@@ -547,6 +555,13 @@ s! {
     pub struct ptrace_siginfo {
         pub psi_siginfo: siginfo_t,
         pub psi_lwpid: lwpid_t,
+    }
+
+    pub struct sysctldesc {
+        pub descr_num: i32,
+        pub descr_ver: u32,
+        pub descr_len: u32,
+        pub descr_str: [::c_char; 1],
     }
 }
 
@@ -2011,6 +2026,8 @@ pub const KVME_FLAG_NOCOREDUMP: ::c_int = 0x000000004;
 pub const KVME_FLAG_PAGEABLE: ::c_int = 0x000000008;
 pub const KVME_FLAG_GROWS_UP: ::c_int = 0x000000010;
 pub const KVME_FLAG_GROWS_DOWN: ::c_int = 0x000000020;
+
+pub const NGROUPS_MAX: ::c_int = 16;
 
 const_fn! {
     {const} fn _ALIGN(p: usize) -> usize {
