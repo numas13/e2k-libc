@@ -382,12 +382,6 @@ s! {
         __unused5: ::c_ulong,
     }
 
-    pub struct ip_mreqn {
-        pub imr_multiaddr: ::in_addr,
-        pub imr_address: ::in_addr,
-        pub imr_ifindex: ::c_int,
-    }
-
     pub struct seccomp_notif_sizes {
         pub seccomp_notif: ::__u16,
         pub seccomp_notif_resp: ::__u16,

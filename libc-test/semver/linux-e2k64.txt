@@ -197,7 +197,6 @@ sigcontext
 extra_ucontext
 ucontext_t
 termios2
-ip_mreqn
 getcontext
 setcontext
 swapcontext
