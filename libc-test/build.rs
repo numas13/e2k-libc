@@ -1659,6 +1659,10 @@ fn test_android(target: &str) {
             // Requires Linux kernel 5.6
             "VMADDR_CID_LOCAL" => true,
 
+            // FIXME: conflicts with standard C headers and is tested in
+            // `linux_termios.rs` below:
+            "TCGETS2" | "TCSETS2" | "TCSETSW2" | "TCSETSF2" => true,
+
             _ => false,
         }
     });
@@ -1760,8 +1764,13 @@ fn test_freebsd(target: &str) {
         _ => cfg.define("_WANT_FREEBSD11_STAT", None),
     };
 
-    let freebsdlast = match freebsd_ver {
-        Some(12) | Some(13) => true,
+    let freebsd12 = match freebsd_ver {
+        Some(n) if n >= 12 => true,
+        _ => false,
+    };
+
+    let freebsd13 = match freebsd_ver {
+        Some(n) if n >= 13 => true,
         _ => false,
     };
 
@@ -1814,10 +1823,11 @@ fn test_freebsd(target: &str) {
                 "stdlib.h",
                 "string.h",
                 "sys/capsicum.h",
-                [freebsdlast]:"sys/auxv.h",
+                [freebsd12]:"sys/auxv.h",
                 "sys/cpuset.h",
-                [freebsdlast]:"sys/domainset.h",
+                [freebsd12]:"sys/domainset.h",
                 "sys/event.h",
+                [freebsd13]:"sys/eventfd.h",
                 "sys/extattr.h",
                 "sys/file.h",
                 "sys/ioctl.h",
@@ -1909,6 +1919,9 @@ fn test_freebsd(target: &str) {
             {
                 true
             }
+
+            // These constants were introduced in FreeBSD 13:
+            "EFD_CLOEXEC" | "EFD_NONBLOCK" | "EFD_SEMAPHORE" if Some(13) > freebsd_ver => true,
 
             // These constants were introduced in FreeBSD 12:
             "SF_USER_READAHEAD"
@@ -2003,15 +2016,35 @@ fn test_freebsd(target: &str) {
             // Added in FreeBSD 13.0 (r356667)
             "GRND_INSECURE" if Some(13) > freebsd_ver => true,
 
-            // Added in FreeBSD 12.1 (r343964 and r345228)
-            "PROC_ASLR_CTL" | "PROC_ASLR_STATUS" | "PROC_PROCCTL_MD_MIN"
+            // Added in FreeBSD 12.1 (r343964)
+            "PROC_ASLR_CTL"
+            | "PROC_ASLR_STATUS"
+            | "PROC_ASLR_FORCE_ENABLE"
+            | "PROC_ASLR_FORCE_DISABLE"
+            | "PROC_ASLR_NOFORCE"
+            | "PROC_ASLR_ACTIVE"
                 if Some(11) == freebsd_ver =>
             {
                 true
             }
 
+            // Added in FreeBSD 12.1 (r345228)
+            "PROC_PROCCTL_MD_MIN" if Some(11) == freebsd_ver => true,
+
             // Added in FreeBSD 13.0 (r349609)
-            "PROC_PROTMAX_CTL" | "PROC_PROTMAX_STATUS" if Some(13) > freebsd_ver => true,
+            "PROC_PROTMAX_CTL"
+            | "PROC_PROTMAX_STATUS"
+            | "PROC_PROTMAX_FORCE_ENABLE"
+            | "PROC_PROTMAX_FORCE_DISABLE"
+            | "PROC_PROTMAX_NOFORCE"
+            | "PROC_PROTMAX_ACTIVE"
+                if Some(13) > freebsd_ver =>
+            {
+                true
+            }
+
+            // Added in FreeBSD 12.1
+            "PT_GET_SC_RET" | "PT_GET_SC_ARGS" if Some(11) == freebsd_ver => true,
 
             // Added in in FreeBSD 13.0 (r367776 and r367287)
             "SCM_CREDS2" | "LOCAL_CREDS_PERSISTENT" if Some(13) > freebsd_ver => true,
@@ -2043,6 +2076,9 @@ fn test_freebsd(target: &str) {
 
             // `procstat` is a private struct
             "procstat" => true,
+
+            // `ptrace_sc_ret` is not available in FreeBSD 11
+            "ptrace_sc_ret" if Some(11) == freebsd_ver => true,
 
             _ => false,
         }
@@ -2868,7 +2904,11 @@ fn test_linux(target: &str) {
 
             // FIXME: conflicts with glibc headers and is tested in
             // `linux_termios.rs` below:
-            "BOTHER" => true,
+            | "BOTHER"
+            | "TCGETS2"
+            | "TCSETS2"
+            | "TCSETSW2"
+            | "TCSETSF2" => true,
 
             // FIXME: on musl the pthread types are defined a little differently
             // - these constants are used by the glibc implementation.
@@ -3218,10 +3258,15 @@ fn test_linux_like_apis(target: &str) {
         // test termios
         let mut cfg = ctest_cfg();
         cfg.header("asm/termbits.h");
+        cfg.header("linux/termios.h");
         cfg.skip_type(|_| true)
             .skip_static(|_| true)
             .skip_fn(|_| true)
-            .skip_const(|c| c != "BOTHER")
+            .skip_const(|c| match c {
+                "BOTHER" => false,
+                "TCGETS2" | "TCSETS2" | "TCSETSW2" | "TCSETSF2" => false,
+                _ => true,
+            })
             .skip_struct(|s| s != "termios2")
             .type_name(move |ty, is_struct, is_union| match ty {
                 t if is_struct => format!("struct {}", t),

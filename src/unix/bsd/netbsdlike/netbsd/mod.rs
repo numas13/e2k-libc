@@ -1395,6 +1395,15 @@ pub const MAP_NORESERVE: ::c_int = 0x40;
 pub const MAP_HASSEMAPHORE: ::c_int = 0x200;
 pub const MAP_WIRED: ::c_int = 0x800;
 pub const MAP_STACK: ::c_int = 0x2000;
+// map alignment aliases for MAP_ALIGNED
+pub const MAP_ALIGNMENT_SHIFT: ::c_int = 24;
+pub const MAP_ALIGNMENT_MASK: ::c_int = 0xff << MAP_ALIGNMENT_SHIFT;
+pub const MAP_ALIGNMENT_64KB: ::c_int = 16 << MAP_ALIGNMENT_SHIFT;
+pub const MAP_ALIGNMENT_16MB: ::c_int = 24 << MAP_ALIGNMENT_SHIFT;
+pub const MAP_ALIGNMENT_4GB: ::c_int = 32 << MAP_ALIGNMENT_SHIFT;
+pub const MAP_ALIGNMENT_1TB: ::c_int = 40 << MAP_ALIGNMENT_SHIFT;
+pub const MAP_ALIGNMENT_256TB: ::c_int = 48 << MAP_ALIGNMENT_SHIFT;
+pub const MAP_ALIGNMENT_64PB: ::c_int = 56 << MAP_ALIGNMENT_SHIFT;
 // mremap flag
 pub const MAP_REMAPDUP: ::c_int = 0x004;
 
@@ -1709,6 +1718,13 @@ pub const NOTE_TRACKERR: u32 = 0x00000002;
 pub const NOTE_CHILD: u32 = 0x00000004;
 
 pub const TMP_MAX: ::c_uint = 308915776;
+
+pub const AI_PASSIVE: ::c_int = 0x00000001;
+pub const AI_CANONNAME: ::c_int = 0x00000002;
+pub const AI_NUMERICHOST: ::c_int = 0x00000004;
+pub const AI_NUMERICSERV: ::c_int = 0x00000008;
+pub const AI_ADDRCONFIG: ::c_int = 0x00000400;
+pub const AI_SRV: ::c_int = 0x00000800;
 
 pub const NI_MAXHOST: ::socklen_t = 1025;
 pub const NI_MAXSERV: ::socklen_t = 32;
@@ -2529,10 +2545,23 @@ extern "C" {
     pub fn emalloc(n: ::size_t) -> *mut ::c_void;
     pub fn ecalloc(n: ::size_t, c: ::size_t) -> *mut ::c_void;
     pub fn erealloc(p: *mut ::c_void, n: ::size_t) -> *mut ::c_void;
+    pub fn ereallocarr(p: *mut ::c_void, n: ::size_t, s: ::size_t);
     pub fn estrdup(s: *const ::c_char) -> *mut ::c_char;
     pub fn estrndup(s: *const ::c_char, len: ::size_t) -> *mut ::c_char;
     pub fn estrlcpy(dst: *mut ::c_char, src: *const ::c_char, len: ::size_t) -> ::size_t;
     pub fn estrlcat(dst: *mut ::c_char, src: *const ::c_char, len: ::size_t) -> ::size_t;
+    pub fn estrtoi(
+        nptr: *const ::c_char,
+        base: ::c_int,
+        lo: ::intmax_t,
+        hi: ::intmax_t,
+    ) -> ::intmax_t;
+    pub fn estrtou(
+        nptr: *const ::c_char,
+        base: ::c_int,
+        lo: ::uintmax_t,
+        hi: ::uintmax_t,
+    ) -> ::uintmax_t;
     pub fn easprintf(string: *mut *mut ::c_char, fmt: *const ::c_char, ...) -> ::c_int;
     pub fn evasprintf(string: *mut *mut ::c_char, fmt: *const ::c_char, ...) -> ::c_int;
     pub fn esetfunc(
@@ -2599,6 +2628,50 @@ extern "C" {
         status: ::c_int,
         tpe: ::c_int,
     );
+
+    pub fn getxattr(
+        path: *const ::c_char,
+        name: *const ::c_char,
+        value: *mut ::c_void,
+        size: ::size_t,
+    ) -> ::ssize_t;
+    pub fn lgetxattr(
+        path: *const ::c_char,
+        name: *const ::c_char,
+        value: *mut ::c_void,
+        size: ::size_t,
+    ) -> ::ssize_t;
+    pub fn fgetxattr(
+        filedes: ::c_int,
+        name: *const ::c_char,
+        value: *mut ::c_void,
+        size: ::size_t,
+    ) -> ::ssize_t;
+    pub fn setxattr(
+        path: *const ::c_char,
+        name: *const ::c_char,
+        value: *const ::c_void,
+        size: ::size_t,
+    ) -> ::c_int;
+    pub fn lsetxattr(
+        path: *const ::c_char,
+        name: *const ::c_char,
+        value: *const ::c_void,
+        size: ::size_t,
+    ) -> ::c_int;
+    pub fn fsetxattr(
+        filedes: ::c_int,
+        name: *const ::c_char,
+        value: *const ::c_void,
+        size: ::size_t,
+        flags: ::c_int,
+    ) -> ::c_int;
+    pub fn listxattr(path: *const ::c_char, list: *mut ::c_char, size: ::size_t) -> ::ssize_t;
+    pub fn llistxattr(path: *const ::c_char, list: *mut ::c_char, size: ::size_t) -> ::ssize_t;
+    pub fn flistxattr(filedes: ::c_int, list: *mut ::c_char, size: ::size_t) -> ::ssize_t;
+    pub fn removexattr(path: *const ::c_char, name: *const ::c_char) -> ::c_int;
+    pub fn lremovexattr(path: *const ::c_char, name: *const ::c_char) -> ::c_int;
+    pub fn fremovexattr(fd: ::c_int, path: *const ::c_char, name: *const ::c_char) -> ::c_int;
 
     pub fn string_to_flags(
         string_p: *mut *mut ::c_char,

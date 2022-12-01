@@ -106,6 +106,11 @@ s! {
         pub f_uid_uuid: ::uuid_t,
     }
 
+    #[deprecated(
+        since = "0.2.107",
+        note = "stat.st_blksize is an i64 and stat.st_qspare1 is replaced with \
+                stat.st_blksize in DragonFly 5.8"
+    )]
     pub struct stat {
         pub st_ino: ::ino_t,
         pub st_nlink: ::nlink_t,
@@ -1369,6 +1374,14 @@ extern "C" {
     pub fn setutxdb(_type: ::c_uint, file: *mut ::c_char) -> ::c_int;
 
     pub fn aio_waitcomplete(iocbp: *mut *mut aiocb, timeout: *mut ::timespec) -> ::c_int;
+
+    #[deprecated(since = "0.2.107", note = "len should be of type size_t")]
+    pub fn devname_r(
+        dev: ::dev_t,
+        mode: ::mode_t,
+        buf: *mut ::c_char,
+        len: ::c_int,
+    ) -> *mut ::c_char;
 
     pub fn waitid(
         idtype: idtype_t,

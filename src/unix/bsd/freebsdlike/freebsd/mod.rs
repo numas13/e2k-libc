@@ -153,6 +153,11 @@ s! {
         pub pl_syscall_narg: ::c_uint,
     }
 
+    pub struct ptrace_sc_ret {
+        pub sr_retval: [::register_t; 2],
+        pub sr_error: ::c_int,
+    }
+
     pub struct cpuset_t {
         #[cfg(target_pointer_width = "64")]
         __bits: [::c_long; 4],
@@ -1139,6 +1144,8 @@ pub const PT_FOLLOW_FORK: ::c_int = 23;
 pub const PT_LWP_EVENTS: ::c_int = 24;
 pub const PT_GET_EVENT_MASK: ::c_int = 25;
 pub const PT_SET_EVENT_MASK: ::c_int = 26;
+pub const PT_GET_SC_ARGS: ::c_int = 27;
+pub const PT_GET_SC_RET: ::c_int = 28;
 pub const PT_GETREGS: ::c_int = 33;
 pub const PT_SETREGS: ::c_int = 34;
 pub const PT_GETFPREGS: ::c_int = 35;
@@ -1177,6 +1184,33 @@ pub const PROC_PROTMAX_STATUS: ::c_int = 16;
 pub const PROC_STACKGAP_CTL: ::c_int = 17;
 pub const PROC_STACKGAP_STATUS: ::c_int = 18;
 pub const PROC_PROCCTL_MD_MIN: ::c_int = 0x10000000;
+
+pub const PPROT_SET: ::c_int = 1;
+pub const PPROT_CLEAR: ::c_int = 2;
+pub const PPROT_DESCEND: ::c_int = 0x10;
+pub const PPROT_INHERIT: ::c_int = 0x20;
+
+pub const PROC_TRACE_CTL_ENABLE: ::c_int = 1;
+pub const PROC_TRACE_CTL_DISABLE: ::c_int = 2;
+pub const PROC_TRACE_CTL_DISABLE_EXEC: ::c_int = 3;
+
+pub const PROC_TRAPCAP_CTL_ENABLE: ::c_int = 1;
+pub const PROC_TRAPCAP_CTL_DISABLE: ::c_int = 2;
+
+pub const PROC_ASLR_FORCE_ENABLE: ::c_int = 1;
+pub const PROC_ASLR_FORCE_DISABLE: ::c_int = 2;
+pub const PROC_ASLR_NOFORCE: ::c_int = 3;
+pub const PROC_ASLR_ACTIVE: ::c_int = 0x80000000;
+
+pub const PROC_PROTMAX_FORCE_ENABLE: ::c_int = 1;
+pub const PROC_PROTMAX_FORCE_DISABLE: ::c_int = 2;
+pub const PROC_PROTMAX_NOFORCE: ::c_int = 3;
+pub const PROC_PROTMAX_ACTIVE: ::c_int = 0x80000000;
+
+pub const PROC_STACKGAP_ENABLE: ::c_int = 0x0001;
+pub const PROC_STACKGAP_DISABLE: ::c_int = 0x0002;
+pub const PROC_STACKGAP_ENABLE_EXEC: ::c_int = 0x0004;
+pub const PROC_STACKGAP_DISABLE_EXEC: ::c_int = 0x0008;
 
 pub const AF_SLOW: ::c_int = 33;
 pub const AF_SCLUSTER: ::c_int = 34;
@@ -1683,6 +1717,11 @@ pub const RFLINUXTHPN: ::c_int = 65536;
 pub const RFTSIGZMB: ::c_int = 524288;
 pub const RFSPAWN: ::c_int = 2147483648;
 
+// For eventfd
+pub const EFD_SEMAPHORE: ::c_int = 0x1;
+pub const EFD_NONBLOCK: ::c_int = 0x4;
+pub const EFD_CLOEXEC: ::c_int = 0x100000;
+
 pub const MALLOCX_ZERO: ::c_int = 0x40;
 
 /// size of returned wchan message
@@ -2037,6 +2076,13 @@ extern "C" {
         timeout: *const ::timespec,
     ) -> ::c_int;
     pub fn aio_write(aiocbp: *mut aiocb) -> ::c_int;
+
+    pub fn devname_r(
+        dev: ::dev_t,
+        mode: ::mode_t,
+        buf: *mut ::c_char,
+        len: ::c_int,
+    ) -> *mut ::c_char;
 
     pub fn extattr_delete_fd(
         fd: ::c_int,

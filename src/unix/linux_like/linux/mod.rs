@@ -1330,6 +1330,7 @@ pub const POSIX_MADV_NORMAL: ::c_int = 0;
 pub const POSIX_MADV_RANDOM: ::c_int = 1;
 pub const POSIX_MADV_SEQUENTIAL: ::c_int = 2;
 pub const POSIX_MADV_WILLNEED: ::c_int = 3;
+pub const POSIX_SPAWN_USEVFORK: ::c_int = 64;
 
 pub const S_IEXEC: mode_t = 64;
 pub const S_IWRITE: mode_t = 128;
@@ -3917,6 +3918,8 @@ extern "C" {
         needlelen: ::size_t,
     ) -> *mut ::c_void;
     pub fn sched_getcpu() -> ::c_int;
+
+    pub fn memfd_create(name: *const ::c_char, flags: ::c_uint) -> ::c_int;
 }
 
 cfg_if! {
