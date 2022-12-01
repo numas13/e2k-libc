@@ -1214,7 +1214,9 @@ fn test_dragonflybsd(target: &str) {
         "sys/event.h",
         "sys/file.h",
         "sys/ioctl.h",
+        "sys/cpuctl.h",
         "sys/ipc.h",
+        "sys/kinfo.h",
         "sys/ktrace.h",
         "sys/malloc.h",
         "sys/mman.h",
@@ -1810,6 +1812,7 @@ fn test_freebsd(target: &str) {
                 "net/if.h",
                 "net/if_arp.h",
                 "net/if_dl.h",
+                "net/if_mib.h",
                 "net/route.h",
                 "netdb.h",
                 "netinet/ip.h",
@@ -1875,6 +1878,7 @@ fn test_freebsd(target: &str) {
                 "sys/vmmeter.h",
                 "sys/wait.h",
                 "libprocstat.h",
+                "devstat.h",
                 "syslog.h",
                 "termios.h",
                 "time.h",
@@ -1888,8 +1892,19 @@ fn test_freebsd(target: &str) {
     cfg.type_name(move |ty, is_struct, is_union| {
         match ty {
             // Just pass all these through, no need for a "struct" prefix
-            "FILE" | "fd_set" | "Dl_info" | "DIR" | "Elf32_Phdr" | "Elf64_Phdr"
-            | "Elf32_Auxinfo" | "Elf64_Auxinfo" => ty.to_string(),
+            "FILE"
+            | "fd_set"
+            | "Dl_info"
+            | "DIR"
+            | "Elf32_Phdr"
+            | "Elf64_Phdr"
+            | "Elf32_Auxinfo"
+            | "Elf64_Auxinfo"
+            | "devstat_select_mode"
+            | "devstat_support_flags"
+            | "devstat_type_flags"
+            | "devstat_match_flags"
+            | "devstat_priority" => ty.to_string(),
 
             // FIXME: https://github.com/rust-lang/libc/issues/1273
             "sighandler_t" => "sig_t".to_string(),
@@ -1918,6 +1933,8 @@ fn test_freebsd(target: &str) {
             // Field is named `type` in C but that is a Rust keyword,
             // so these fields are translated to `type_` in the bindings.
             "type_" if struct_ == "rtprio" => "type".to_string(),
+            "type_" if struct_ == "sockstat" => "type".to_string(),
+            "type_" if struct_ == "devstat_match_table" => "type".to_string(),
             s => s.to_string(),
         }
     });
@@ -2093,6 +2110,50 @@ fn test_freebsd(target: &str) {
                 true
             }
 
+            // Added in freebsd 14.
+            "IFCAP_MEXTPG" if Some(14) > freebsd_ver => true,
+            // Added in freebsd 13.
+            "IFF_KNOWSEPOCH" | "IFCAP_TXTLS4" | "IFCAP_TXTLS6" | "IFCAP_VXLAN_HWCSUM"
+            | "IFCAP_VXLAN_HWTSO" | "IFCAP_TXTLS_RTLMT" | "IFCAP_TXTLS"
+                if Some(13) > freebsd_ver =>
+            {
+                true
+            }
+            // Added in freebsd 12.
+            "IFF_NOGROUP" | "IFCAP_TXRTLMT" | "IFCAP_HWRXTSTMP" if Some(12) > freebsd_ver => true,
+            // Added in FreeBSD 13.
+            "PS_FST_TYPE_EVENTFD" if Some(13) > freebsd_ver => true,
+
+            // Added in FreeBSD 14.
+            "MNT_RECURSE"
+            | "MNT_DEFERRED"
+            | "MNTK_RECURSE"
+            | "MNTK_UPPER_WAITER"
+            | "MNTK_TASKQUEUE_WAITER"
+                if Some(14) > freebsd_ver =>
+            {
+                true
+            }
+
+            // Added in FreeBSD 13.
+            "MNT_EXTLS" | "MNT_EXTLSCERT" | "MNT_EXTLSCERTUSER" | "MNT_NOCOVER"
+            | "MNT_EMPTYDIR" | "MNTK_NOMSYNC" | "MNTK_UNIONFS" | "MNTK_FPLOOKUP"
+            | "MNTK_SUSPEND_ALL"
+                if Some(13) > freebsd_ver =>
+            {
+                true
+            }
+
+            // Added in FreeBSD 12.
+            "MNT_UNTRUSTED" | "MNT_VERIFIED" | "MNTK_TEXT_REFS" | "MNTK_VMSETSIZE_BUG"
+                if Some(12) > freebsd_ver =>
+            {
+                true
+            }
+
+            // Added in FreeBSD 14.
+            "PT_COREDUMP" | "PC_ALL" | "PC_COMPRESS" if Some(14) > freebsd_ver => true,
+
             _ => false,
         }
     });
@@ -2126,6 +2187,9 @@ fn test_freebsd(target: &str) {
 
             // obsolete version
             "vmtotal" if Some(11) == freebsd_ver => true,
+
+            // `ptrace_coredump` introduced in FreeBSD 14.
+            "ptrace_coredump" if Some(14) > freebsd_ver => true,
 
             _ => false,
         }
@@ -2207,6 +2271,14 @@ fn test_freebsd(target: &str) {
             ("Elf32_Auxinfo", "a_un") => true,
             ("Elf64_Auxinfo", "a_un") => true,
 
+            // union fields
+            ("if_data", "__ifi_epoch") => true,
+            ("if_data", "__ifi_lastchange") => true,
+            ("ifreq", "ifr_ifru") => true,
+
+            // anonymous struct
+            ("devstat", "dev_links") => true,
+
             // FIXME: structs too complicated to bind for now...
             ("kinfo_proc", "ki_paddr") => true,
             ("kinfo_proc", "ki_addr") => true,
@@ -2224,6 +2296,11 @@ fn test_freebsd(target: &str) {
 
             // `__sem_base` is a private struct field
             ("semid_ds", "__sem_base") => true,
+
+            // `snap_time` is a `long double`, but it's a nightmare to bind correctly in rust
+            // for the moment, so it's a best effort thing...
+            ("statinfo", "snap_time") => true,
+
             _ => false,
         }
     });

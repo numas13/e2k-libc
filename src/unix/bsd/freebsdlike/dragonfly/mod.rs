@@ -215,6 +215,54 @@ s! {
         pub shm_ctime: ::time_t,
         shm_internal: *mut ::c_void,
     }
+
+    pub struct kinfo_file {
+        pub f_size: ::size_t,
+        pub f_pid: ::pid_t,
+        pub f_uid: ::uid_t,
+        pub f_fd: ::c_int,
+        pub f_file: *mut ::c_void,
+        pub f_type: ::c_short,
+        pub f_count: ::c_int,
+        pub f_msgcount: ::c_int,
+        pub f_offset: ::off_t,
+        pub f_data: *mut ::c_void,
+        pub f_flag: ::c_uint,
+    }
+
+    pub struct kinfo_cputime {
+        pub cp_user: u64,
+        pub cp_nice: u64,
+        pub cp_sys: u64,
+        pub cp_intr: u64,
+        pub cp_idel: u64,
+        cp_unused01: u64,
+        cp_unused02: u64,
+        pub cp_sample_pc: u64,
+        pub cp_sample_sp: u64,
+        pub cp_msg: [::c_char; 32],
+    }
+
+    pub struct cpuctl_msr_args_t {
+        pub msr: ::c_int,
+        pub data: u64,
+    }
+
+    pub struct cpuctl_cpuid_args_t {
+        pub level: ::c_int,
+        pub data: [u32; 4],
+    }
+
+    pub struct cpuctl_cpuid_count_args_t {
+        pub level: ::c_int,
+        pub level_type: ::c_int,
+        pub data: [u32; 4],
+    }
+
+    pub struct cpuctl_update_args_t {
+        pub data: *mut ::c_void,
+        pub size: ::size_t,
+    }
 }
 
 s_no_extra_traits! {
@@ -861,6 +909,14 @@ pub const CTL_P1003_1B_SEM_VALUE_MAX: ::c_int = 23;
 pub const CTL_P1003_1B_SIGQUEUE_MAX: ::c_int = 24;
 pub const CTL_P1003_1B_TIMER_MAX: ::c_int = 25;
 pub const CTL_P1003_1B_MAXID: ::c_int = 26;
+
+pub const CPUCTL_RSMSR: ::c_int = 0xc0106301;
+pub const CPUCTL_WRMSR: ::c_int = 0xc0106302;
+pub const CPUCTL_CPUID: ::c_int = 0xc0106303;
+pub const CPUCTL_UPDATE: ::c_int = 0xc0106304;
+pub const CPUCTL_MSRSBIT: ::c_int = 0xc0106305;
+pub const CPUCTL_MSRCBIT: ::c_int = 0xc0106306;
+pub const CPUCTL_CPUID_COUNT: ::c_int = 0xc0106307;
 
 pub const EVFILT_READ: i16 = -1;
 pub const EVFILT_WRITE: i16 = -2;
