@@ -1679,6 +1679,9 @@ fn test_android(target: &str) {
             "IBSHIFT" => true,
             "TCGETS2" | "TCSETS2" | "TCSETSW2" | "TCSETSF2" => true,
 
+            // is a private value for kernel usage normally
+            "FUSE_SUPER_MAGIC" => true,
+
             _ => false,
         }
     });
@@ -2041,7 +2044,7 @@ fn test_freebsd(target: &str) {
             // This was changed to 96(0x60) in FreeBSD 13:
             // https://github.com/freebsd/freebsd/
             // commit/06b00ceaa914a3907e4e27bad924f44612bae1d7
-            "MINCORE_SUPER" if Some(13) == freebsd_ver => true,
+            "MINCORE_SUPER" if Some(13) <= freebsd_ver => true,
 
             // Added in FreeBSD 12.0
             "EINTEGRITY" if Some(11) == freebsd_ver => true,
@@ -2089,10 +2092,11 @@ fn test_freebsd(target: &str) {
             // Added in in FreeBSD 13.0 (r367776 and r367287)
             "SCM_CREDS2" | "LOCAL_CREDS_PERSISTENT" if Some(13) > freebsd_ver => true,
 
+            // Added in FreeBSD 14
+            "SPACECTL_DEALLOC" if Some(14) > freebsd_ver => true,
+
             "VM_TOTAL" if Some(11) == freebsd_ver => true,
 
-            // Added in FreeBSD 14.
-            "KERN_STACKTOP" if Some(14) > freebsd_ver => true,
             // Added in FreeBSD 13.
             "KERN_PROC_SIGFASTBLK"
             | "USER_LOCALBASE"
@@ -2136,31 +2140,18 @@ fn test_freebsd(target: &str) {
             "PS_FST_TYPE_EVENTFD" if Some(13) > freebsd_ver => true,
 
             // Added in FreeBSD 14.
-            "MNT_RECURSE"
-            | "MNT_DEFERRED"
-            | "MNTK_RECURSE"
-            | "MNTK_UPPER_WAITER"
-            | "MNTK_TASKQUEUE_WAITER"
-                if Some(14) > freebsd_ver =>
-            {
-                true
-            }
+            "MNT_RECURSE" | "MNT_DEFERRED" if Some(14) > freebsd_ver => true,
 
             // Added in FreeBSD 13.
             "MNT_EXTLS" | "MNT_EXTLSCERT" | "MNT_EXTLSCERTUSER" | "MNT_NOCOVER"
-            | "MNT_EMPTYDIR" | "MNTK_NOMSYNC" | "MNTK_UNIONFS" | "MNTK_FPLOOKUP"
-            | "MNTK_SUSPEND_ALL"
+            | "MNT_EMPTYDIR"
                 if Some(13) > freebsd_ver =>
             {
                 true
             }
 
             // Added in FreeBSD 12.
-            "MNT_UNTRUSTED" | "MNT_VERIFIED" | "MNTK_TEXT_REFS" | "MNTK_VMSETSIZE_BUG"
-                if Some(12) > freebsd_ver =>
-            {
-                true
-            }
+            "MNT_UNTRUSTED" | "MNT_VERIFIED" if Some(12) > freebsd_ver => true,
 
             // Added in FreeBSD 14.
             "PT_COREDUMP" | "PC_ALL" | "PC_COMPRESS" if Some(14) > freebsd_ver => true,
@@ -2169,6 +2160,9 @@ fn test_freebsd(target: &str) {
             "F_KINFO" => true, // FIXME: depends how frequent freebsd 14 is updated on CI, this addition went this week only.
             "SHM_RENAME_NOREPLACE"
             | "SHM_RENAME_EXCHANGE"
+            | "SHM_LARGEPAGE_ALLOC_DEFAULT"
+            | "SHM_LARGEPAGE_ALLOC_NOWAIT"
+            | "SHM_LARGEPAGE_ALLOC_HARD"
             | "MFD_CLOEXEC"
             | "MFD_ALLOW_SEALING"
             | "MFD_HUGETLB"
@@ -2208,6 +2202,9 @@ fn test_freebsd(target: &str) {
             // `ptrace_sc_ret` is not available in FreeBSD 11
             "ptrace_sc_ret" if Some(11) == freebsd_ver => true,
 
+            // `spacectl_range` was introduced in FreeBSD 14
+            "spacectl_range" if Some(14) > freebsd_ver => true,
+
             // obsolete version
             "vmtotal" if Some(11) == freebsd_ver => true,
 
@@ -2236,6 +2233,9 @@ fn test_freebsd(target: &str) {
             // `ssize_t` in FreeBSD11:
             "aio_waitcomplete" if Some(10) == freebsd_ver => true,
 
+            // `fspacectl` was introduced in FreeBSD 14
+            "fspacectl" if Some(14) > freebsd_ver => true,
+
             // The `uname` function in the `utsname.h` FreeBSD header is a C
             // inline function (has no symbol) that calls the `__xuname` symbol.
             // Therefore the function pointer comparison does not make sense for it.
@@ -2258,7 +2258,9 @@ fn test_freebsd(target: &str) {
             "SOCKCRED2SIZE" if Some(13) > freebsd_ver => true,
 
             // Those are not available in FreeBSD 12.
-            "memfd_create" | "shm_rename" if Some(13) > freebsd_ver => true,
+            "memfd_create" | "shm_create_largepage" | "shm_rename" if Some(13) > freebsd_ver => {
+                true
+            }
 
             _ => false,
         }
@@ -2967,6 +2969,11 @@ fn test_linux(target: &str) {
         }
         // FIXME: musl CI has old headers
         if (musl || sparc64) && ty.starts_with("uinput_") {
+            return true;
+        }
+        // FIXME(https://github.com/rust-lang/libc/issues/1558): passing by
+        // value corrupts the value for reasons not understood.
+        if (gnu && sparc64) && ty == "ip_mreqn" {
             return true;
         }
         match ty {
