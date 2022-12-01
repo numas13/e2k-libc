@@ -3840,8 +3840,6 @@ extern "C" {
         sevp: *mut sigevent,
     ) -> ::c_int;
 
-    pub fn posix_fallocate(fd: ::c_int, offset: ::off_t, len: ::off_t) -> ::c_int;
-    pub fn posix_fadvise(fd: ::c_int, offset: ::off_t, len: ::off_t, advise: ::c_int) -> ::c_int;
     pub fn mkostemp(template: *mut ::c_char, flags: ::c_int) -> ::c_int;
     pub fn mkostemps(template: *mut ::c_char, suffixlen: ::c_int, flags: ::c_int) -> ::c_int;
 
@@ -4037,6 +4035,10 @@ extern "C" {
     pub fn getfh(path: *const ::c_char, fhp: *mut fhandle_t) -> ::c_int;
     pub fn lgetfh(path: *const ::c_char, fhp: *mut fhandle_t) -> ::c_int;
     pub fn getfsstat(buf: *mut ::statfs, bufsize: ::c_long, mode: ::c_int) -> ::c_int;
+    #[cfg_attr(
+        all(target_os = "freebsd", freebsd11),
+        link_name = "getmntinfo@FBSD_1.0"
+    )]
     pub fn getmntinfo(mntbufp: *mut *mut ::statfs, mode: ::c_int) -> ::c_int;
     pub fn mount(
         type_: *const ::c_char,
