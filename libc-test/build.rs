@@ -430,6 +430,7 @@ fn test_openbsd(target: &str) {
         "resolv.h",
         "pthread.h",
         "dlfcn.h",
+        "search.h",
         "signal.h",
         "string.h",
         "sys/file.h",
@@ -771,6 +772,7 @@ fn test_solarish(target: &str) {
         "stdio.h",
         "stdlib.h",
         "string.h",
+        "sys/auxv.h",
         "sys/epoll.h",
         "sys/eventfd.h",
         "sys/file.h",
@@ -1723,6 +1725,8 @@ fn test_android(target: &str) {
 
             // is a private value for kernel usage normally
             "FUSE_SUPER_MAGIC" => true,
+            // linux 5.12 min
+            "MPOL_F_NUMA_BALANCING" => true,
 
             _ => false,
         }
@@ -1755,6 +1759,9 @@ fn test_android(target: &str) {
 
             // Added in API level 30, but tests use level 28.
             "mlock2" => true,
+
+            // Added in glibc 2.25.
+            "getentropy" => true,
 
             _ => false,
         }
@@ -2338,6 +2345,9 @@ fn test_freebsd(target: &str) {
             // Those were introduced in FreeBSD 12.
             "flopen" | "flopenat" if Some(12) > freebsd_ver => true,
 
+            // Added in FreeBSD 13.
+            "getlocalbase" if Some(13) > freebsd_ver => true,
+
             _ => false,
         }
     });
@@ -2912,6 +2922,8 @@ fn test_linux(target: &str) {
         "asm/mman.h",
         "linux/can.h",
         "linux/can/raw.h",
+        // FIXME: requires kernel headers >= 5.4.1.
+        [!musl]: "linux/can/j1939.h",
         "linux/dccp.h",
         "linux/errqueue.h",
         "linux/falloc.h",
@@ -3037,6 +3049,11 @@ fn test_linux(target: &str) {
             // For internal use only, to define architecture specific ioctl constants with a libc specific type.
             "Ioctl" => true,
 
+            // FIXME: requires >= 5.4.1 kernel headers
+            "pgn_t" if musl => true,
+            "priority_t" if musl => true,
+            "name_t" if musl => true,
+
             _ => false,
         }
     });
@@ -3098,6 +3115,9 @@ fn test_linux(target: &str) {
             // Might differ between kernel versions
             "open_how" => true,
 
+            // FIXME: requires >= 5.4.1 kernel headers
+            "j1939_filter" if musl => true,
+
             _ => false,
         }
     });
@@ -3132,6 +3152,12 @@ fn test_linux(target: &str) {
                 || name.starts_with("TCP_")
                 || name.starts_with("UINPUT_")
                 || name.starts_with("VMADDR_")
+                // FIXME: Requires >= 5.4.1 kernel headers
+                || name.starts_with("J1939")
+                // FIXME: Requires >= 5.4.1 kernel headers
+                || name.starts_with("SO_J1939")
+                // FIXME: Requires >= 5.4.1 kernel headers
+                || name.starts_with("SCM_J1939")
             {
                 return true;
             }
@@ -3228,6 +3254,18 @@ fn test_linux(target: &str) {
             | "CAN_RAW_FILTER_MAX"
             | "CAN_NPROTO" => true,
 
+            // FIXME: Requires recent kernel headers (5.15)
+            | "J1939_NLA_TOTAL_SIZE"
+            | "J1939_NLA_PGN"
+            | "J1939_NLA_SRC_NAME"
+            | "J1939_NLA_DEST_NAME"
+            | "J1939_NLA_SRC_ADDR"
+            | "J1939_NLA_DEST_ADDR"
+            | "J1939_EE_INFO_RX_RTS"
+            | "J1939_EE_INFO_RX_DPO"
+            | "J1939_EE_INFO_RX_ABORT"
+            | "SOL_CAN_J1939" => true,
+
             // FIXME: Requires recent kernel headers (5.8):
             "STATX_MNT_ID" => true,
 
@@ -3282,6 +3320,8 @@ fn test_linux(target: &str) {
 
             // is a private value for kernel usage normally
             "FUSE_SUPER_MAGIC" => true,
+            // linux 5.12 min
+            "MPOL_F_NUMA_BALANCING" => true,
 
             _ => false,
         }
@@ -3645,6 +3685,7 @@ fn test_haiku(target: &str) {
     let mut cfg = ctest_cfg();
     cfg.flag("-Wno-deprecated-declarations");
     cfg.define("__USE_GNU", Some("1"));
+    cfg.define("_GNU_SOURCE", None);
 
     // POSIX API
     headers! { cfg:
@@ -3747,6 +3788,7 @@ fn test_haiku(target: &str) {
                "uchar.h",
                "unistd.h",
                "utime.h",
+               "utmpx.h",
                "wchar.h",
                "wchar_t.h",
                "wctype.h"
@@ -3754,6 +3796,9 @@ fn test_haiku(target: &str) {
 
     // BSD Extensions
     headers! { cfg:
+               "ifaddrs.h",
+               "libutil.h",
+               "link.h",
                "pty.h",
     }
 
@@ -3799,6 +3844,11 @@ fn test_haiku(target: &str) {
             // with mem::zeroed(), so skip the automated test
             "image_info" | "thread_info" => true,
 
+            "Elf64_Phdr" => true,
+
+            // is an union
+            "cpuid_info" => true,
+
             _ => false,
         }
     });
@@ -3834,6 +3884,8 @@ fn test_haiku(target: &str) {
             // uses an enum as a parameter argument, which is incorrectly
             // translated into a struct argument
             "find_path" => true,
+
+            "get_cpuid" => true,
 
             _ => false,
         }
