@@ -22,6 +22,15 @@ fn do_cc() {
             }
             cmsg.compile("cmsg");
         }
+
+        if target.contains("linux")
+            || target.contains("android")
+            || target.contains("emscripten")
+            || target.contains("fuchsia")
+            || target.contains("bsd")
+        {
+            cc::Build::new().file("src/makedev.c").compile("makedev");
+        }
     }
     if target.contains("android") || target.contains("linux") {
         cc::Build::new().file("src/errqueue.c").compile("errqueue");
@@ -321,6 +330,9 @@ fn test_apple(target: &str) {
             // close calls the close_nocancel system call
             "close" => true,
 
+            // FIXME: remove once the target in CI is updated
+            "pthread_jit_write_freeze_callbacks_np" => true,
+
             _ => false,
         }
     });
@@ -384,7 +396,7 @@ fn test_apple(target: &str) {
         // FIXME: this type has the wrong ABI
         "max_align_t" if i686 => true,
         // Can't return an array from a C function.
-        "uuid_t" => true,
+        "uuid_t" | "vol_capabilities_set_t" => true,
         _ => false,
     });
     cfg.generate("../src/lib.rs", "main.rs");
@@ -491,6 +503,8 @@ fn test_openbsd(target: &str) {
         match name {
             // Removed in OpenBSD 6.0
             "KERN_USERMOUNT" | "KERN_ARND" => true,
+            // Removed in OpenBSD 7.2
+            "KERN_NSELCOLL" => true,
             // Good chance it's going to be wrong depending on the host release
             "KERN_MAXID" | "NET_RT_MAXID" => true,
             "EV_SYSFLAGS" => true,
@@ -1222,6 +1236,7 @@ fn test_dragonflybsd(target: &str) {
         "sys/file.h",
         "sys/ioctl.h",
         "sys/cpuctl.h",
+        "sys/eui64.h",
         "sys/ipc.h",
         "sys/kinfo.h",
         "sys/ktrace.h",
@@ -1887,6 +1902,7 @@ fn test_freebsd(target: &str) {
                 "sys/auxv.h",
                 "sys/cpuset.h",
                 "sys/domainset.h",
+                "sys/eui64.h",
                 "sys/event.h",
                 [freebsd13]:"sys/eventfd.h",
                 "sys/extattr.h",
@@ -2002,16 +2018,38 @@ fn test_freebsd(target: &str) {
             // These constants were introduced in FreeBSD 13:
             "EFD_CLOEXEC" | "EFD_NONBLOCK" | "EFD_SEMAPHORE" if Some(13) > freebsd_ver => true,
 
-            // FIXME: There are deprecated - remove in a couple of releases.
+            // FIXME: These are deprecated - remove in a couple of releases.
             // These constants were removed in FreeBSD 11 (svn r273250) but will
             // still be accepted and ignored at runtime.
             "MAP_RENAME" | "MAP_NORESERVE" => true,
 
-            // FIXME: There are deprecated - remove in a couple of releases.
+            // FIXME: These are deprecated - remove in a couple of releases.
             // These constants were removed in FreeBSD 11 (svn r262489),
             // and they've never had any legitimate use outside of the
             // base system anyway.
             "CTL_MAXID" | "KERN_MAXID" | "HW_MAXID" | "USER_MAXID" => true,
+
+            // FIXME: This is deprecated - remove in a couple of releases.
+            // This was removed in FreeBSD 14 (git 1b4701fe1e8) and never
+            // should've been used anywhere anyway.
+            "TDF_UNUSED23" => true,
+
+            // FIXME: These are deprecated - remove in a couple of releases.
+            // These symbols are not stable across OS-versions.  They were
+            // changed for FreeBSD 14 in git revisions b62848b0c3f and
+            // 2cf7870864e.
+            "PRI_MAX_ITHD" | "PRI_MIN_REALTIME" | "PRI_MAX_REALTIME" | "PRI_MIN_KERN"
+            | "PRI_MAX_KERN" | "PSWP" | "PVM" | "PINOD" | "PRIBIO" | "PVFS" | "PZERO" | "PSOCK"
+            | "PWAIT" | "PLOCK" | "PPAUSE" | "PRI_MIN_TIMESHARE" | "PUSER" | "PI_AV" | "PI_NET"
+            | "PI_DISK" | "PI_TTY" | "PI_DULL" | "PI_SOFT" => true,
+
+            // This symbol changed in FreeBSD 14 (git 051e7d78b03), but the new
+            // version should be safe to use on older releases.
+            "IFCAP_CANTCHANGE" => true,
+
+            // These were removed in FreeBSD 14 (git c6d31b8306e)
+            "TDF_ASTPENDING" | "TDF_NEEDSUSPCHK" | "TDF_NEEDRESCHED" | "TDF_NEEDSIGCHK"
+            | "TDF_ALRMPEND" | "TDF_PROFPEND" | "TDF_MACPEND" => true,
 
             // This constant was removed in FreeBSD 13 (svn r363622), and never
             // had any legitimate use outside of the base system anyway.
@@ -2144,6 +2182,12 @@ fn test_freebsd(target: &str) {
             // Added in FreeBSD 14
             "LIO_READV" | "LIO_WRITEV" | "LIO_VECTORED" if Some(14) > freebsd_ver => true,
 
+            // Added in FreeBSD 13
+            "FIOSSHMLPGCNF" if Some(13) > freebsd_ver => true,
+
+            // Added in FreeBSD 14
+            "IFCAP_NV" if Some(14) > freebsd_ver => true,
+
             _ => false,
         }
     });
@@ -2174,6 +2218,8 @@ fn test_freebsd(target: &str) {
 
             // `sockcred2` is not available in FreeBSD 12.
             "sockcred2" if Some(13) > freebsd_ver => true,
+            // `shm_largepage_conf` was introduced in FreeBSD 13.
+            "shm_largepage_conf" if Some(13) > freebsd_ver => true,
 
             _ => false,
         }
@@ -3107,6 +3153,17 @@ fn test_linux(target: &str) {
             | "SYS_epoll_pwait2"
             | "SYS_mount_setattr" => true,
 
+            // FIXME: these syscalls were added in Linux 5.13 or later
+            // and are currently not included in the glibc headers.
+            | "SYS_quotactl_fd"
+            | "SYS_landlock_create_ruleset"
+            | "SYS_landlock_add_rule"
+            | "SYS_landlock_restrict_self"
+            | "SYS_memfd_secret"
+            | "SYS_process_mrelease"
+            | "SYS_futex_waitv"
+            | "SYS_set_mempolicy_home_node" => true,
+
             // Requires more recent kernel headers:
             | "IFLA_PROP_LIST"
             | "IFLA_ALT_IFNAME"
@@ -3197,6 +3254,27 @@ fn test_linux(target: &str) {
 
             // Added in Linux 5.14
             "FUTEX_LOCK_PI2" => true,
+
+            // FIXME: Parts of netfilter/nfnetlink*.h require more recent kernel headers:
+            | "NFNL_SUBSYS_HOOK" // v5.14+
+            | "NFNL_SUBSYS_COUNT" // bumped in v5.14
+            | "NFQA_VLAN" // v4.7+
+            | "NFQA_L2HDR" // v4.7+
+            | "NFQA_PRIORITY" // v5.18+
+            | "NFQA_VLAN_UNSPEC" // v4.7+
+            | "NFQA_VLAN_PROTO" // v4.7+
+            | "NFQA_VLAN_TCI" // v4.7+
+            | "NFULA_VLAN" // v5.4+
+            | "NFULA_L2HDR" // v5.4+
+            | "NFULA_VLAN_UNSPEC" // v5.4+
+            | "NFULA_VLAN_PROTO" // v5.4+
+            | "NFULA_VLAN_TCI" => true, // v5.4+
+            | "RTNLGRP_NEXTHOP" // linux v5.3+
+            | "RTNLGRP_BRVLAN" // linux v5.6+
+            | "RTNLGRP_MCTP_IFADDR" // linux v5.17+
+            | "RTNLGRP_TUNNEL" // linux v5.18+
+            | "RTNLGRP_STATS" // linux v5.18+
+                => true,
 
             _ => false,
         }
