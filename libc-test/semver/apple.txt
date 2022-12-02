@@ -525,6 +525,7 @@ IPTOS_ECN_ECT0
 IPTOS_ECN_ECT1
 IPTOS_ECN_MASK
 IPTOS_ECN_NOTECT
+IPV6_BOUND_IF
 IPV6_CHECKSUM
 IPV6_HOPLIMIT
 IPV6_JOIN_GROUP
@@ -1996,6 +1997,12 @@ sysdir_get_next_search_path_enumeration
 sysdir_search_path_directory_t
 sysdir_search_path_domain_mask_t
 sysdir_start_search_path_enumeration
+task_create
+task_for_pid
+task_info
+task_inspect_t
+task_terminate
+task_threads
 telldir
 thread_basic_info_t
 thread_extended_info_t

@@ -27,7 +27,7 @@ jobs:
 
   macos:
     name: macOS
-    runs-on: macos-11
+    runs-on: macos-12
     strategy:
       fail-fast: true
       matrix:
@@ -43,7 +43,7 @@ jobs:
 
   windows:
     name: Windows
-    runs-on: windows-2019
+    runs-on: windows-2022
     env:
       OS: windows
     strategy:

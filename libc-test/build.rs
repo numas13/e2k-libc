@@ -208,10 +208,13 @@ fn test_apple(target: &str) {
         "mach/thread_policy.h",
         "malloc/malloc.h",
         "net/bpf.h",
+        "net/dlil.h",
         "net/if.h",
         "net/if_arp.h",
         "net/if_dl.h",
         "net/if_utun.h",
+        "net/if_var.h",
+        "net/ndrv.h",
         "net/route.h",
         "netdb.h",
         "netinet/if_ether.h",
@@ -236,6 +239,7 @@ fn test_apple(target: &str) {
         "stdlib.h",
         "string.h",
         "sysdir.h",
+        "sys/appleapiopts.h",
         "sys/attr.h",
         "sys/clonefile.h",
         "sys/event.h",
@@ -316,9 +320,6 @@ fn test_apple(target: &str) {
 
             // close calls the close_nocancel system call
             "close" => true,
-
-            // macOs 12 minimum
-            "backtrace_async" => true,
 
             _ => false,
         }
@@ -965,7 +966,6 @@ fn test_solarish(target: &str) {
 
 fn test_netbsd(target: &str) {
     assert!(target.contains("netbsd"));
-    let rumprun = target.contains("rumprun");
     let mut cfg = ctest_cfg();
 
     cfg.flag("-Wno-deprecated-declarations");
@@ -1142,26 +1142,6 @@ fn test_netbsd(target: &str) {
             "setrlimit" | "setrlimit64" |    // non-int in 1st arg
             "prlimit" | "prlimit64" |        // non-int in 2nd arg
 
-            // These functions presumably exist on netbsd but don't look like
-            // they're implemented on rumprun yet, just let them slide for now.
-            // Some of them look like they have headers but then don't have
-            // corresponding actual definitions either...
-            "shm_open" |
-            "shm_unlink" |
-            "syscall" |
-            "mq_open" |
-            "mq_close" |
-            "mq_getattr" |
-            "mq_notify" |
-            "mq_receive" |
-            "mq_send" |
-            "mq_setattr" |
-            "mq_timedreceive" |
-            "mq_timedsend" |
-            "mq_unlink" |
-            "ptrace" |
-            "sigaltstack" if rumprun => true,
-
             _ => false,
         }
     });
@@ -1208,6 +1188,7 @@ fn test_dragonflybsd(target: &str) {
         "glob.h",
         "grp.h",
         "ifaddrs.h",
+        "kvm.h",
         "langinfo.h",
         "limits.h",
         "link.h",
@@ -1275,6 +1256,7 @@ fn test_dragonflybsd(target: &str) {
         "utime.h",
         "utmpx.h",
         "vfs/ufs/quota.h",
+        "vm/vm_map.h",
         "wchar.h",
         "iconv.h",
     }
@@ -1328,6 +1310,9 @@ fn test_dragonflybsd(target: &str) {
     });
 
     cfg.skip_struct(move |ty| {
+        if ty.starts_with("__c_anonymous_") {
+            return true;
+        }
         match ty {
             // FIXME: These are tested as part of the linux_fcntl tests since
             // there are header conflicts when including them with all the other
@@ -1594,7 +1579,10 @@ fn test_android(target: &str) {
                 "linux/fs.h",
                 "linux/genetlink.h",
                 "linux/if_alg.h",
+                "linux/if_addr.h",
                 "linux/if_ether.h",
+                "linux/if_link.h",
+                "linux/rtnetlink.h",
                 "linux/if_tun.h",
                 "linux/magic.h",
                 "linux/memfd.h",
@@ -1827,8 +1815,6 @@ fn test_freebsd(target: &str) {
     let freebsd_ver = which_freebsd();
 
     match freebsd_ver {
-        Some(10) => cfg.cfg("freebsd10", None),
-        Some(11) => cfg.cfg("freebsd11", None),
         Some(12) => cfg.cfg("freebsd12", None),
         Some(13) => cfg.cfg("freebsd13", None),
         Some(14) => cfg.cfg("freebsd14", None),
@@ -1840,15 +1826,7 @@ fn test_freebsd(target: &str) {
     // Required for `getline`:
     cfg.define("_WITH_GETLINE", None);
     // Required for making freebsd11_stat available in the headers
-    match freebsd_ver {
-        Some(10) => &mut cfg,
-        _ => cfg.define("_WANT_FREEBSD11_STAT", None),
-    };
-
-    let freebsd12 = match freebsd_ver {
-        Some(n) if n >= 12 => true,
-        _ => false,
-    };
+    cfg.define("_WANT_FREEBSD11_STAT", None);
 
     let freebsd13 = match freebsd_ver {
         Some(n) if n >= 13 => true,
@@ -1906,9 +1884,9 @@ fn test_freebsd(target: &str) {
                 "stdlib.h",
                 "string.h",
                 "sys/capsicum.h",
-                [freebsd12]:"sys/auxv.h",
+                "sys/auxv.h",
                 "sys/cpuset.h",
-                [freebsd12]:"sys/domainset.h",
+                "sys/domainset.h",
                 "sys/event.h",
                 [freebsd13]:"sys/eventfd.h",
                 "sys/extattr.h",
@@ -2024,54 +2002,10 @@ fn test_freebsd(target: &str) {
             // These constants were introduced in FreeBSD 13:
             "EFD_CLOEXEC" | "EFD_NONBLOCK" | "EFD_SEMAPHORE" if Some(13) > freebsd_ver => true,
 
-            // These constants were introduced in FreeBSD 12:
-            "SF_USER_READAHEAD"
-            | "EVFILT_EMPTY"
-            | "SO_REUSEPORT_LB"
-            | "IP_ORIGDSTADDR"
-            | "IP_RECVORIGDSTADDR"
-            | "IPV6_ORIGDSTADDR"
-            | "IPV6_RECVORIGDSTADDR"
-            | "NI_NUMERICSCOPE"
-            | "SO_DOMAIN"
-                if Some(11) == freebsd_ver =>
-            {
-                true
-            }
-
-            // These constants were introduced in FreeBSD 11:
-            "SF_USER_READAHEAD"
-            | "SF_NOCACHE"
-            | "RLIMIT_KQUEUES"
-            | "RLIMIT_UMTXP"
-            | "EVFILT_PROCDESC"
-            | "EVFILT_SENDFILE"
-            | "EVFILT_EMPTY"
-            | "SO_REUSEPORT_LB"
-            | "TCP_CCALGOOPT"
-            | "TCP_PCAP_OUT"
-            | "TCP_PCAP_IN"
-            | "IP_BINDMULTI"
-            | "IP_ORIGDSTADDR"
-            | "IP_RECVORIGDSTADDR"
-            | "IPV6_ORIGDSTADDR"
-            | "IPV6_RECVORIGDSTADDR"
-            | "PD_CLOEXEC"
-            | "PD_ALLOWED_AT_FORK"
-            | "IP_RSS_LISTEN_BUCKET"
-            | "NI_NUMERICSCOPE"
-                if Some(10) == freebsd_ver =>
-            {
-                true
-            }
-
-            // FIXME: This constant has a different value in FreeBSD 10:
-            "RLIM_NLIMITS" if Some(10) == freebsd_ver => true,
-
             // FIXME: There are deprecated - remove in a couple of releases.
             // These constants were removed in FreeBSD 11 (svn r273250) but will
             // still be accepted and ignored at runtime.
-            "MAP_RENAME" | "MAP_NORESERVE" if Some(10) != freebsd_ver => true,
+            "MAP_RENAME" | "MAP_NORESERVE" => true,
 
             // FIXME: There are deprecated - remove in a couple of releases.
             // These constants were removed in FreeBSD 11 (svn r262489),
@@ -2086,16 +2020,6 @@ fn test_freebsd(target: &str) {
             // This was renamed in FreeBSD 12.2 and 13 (r352486).
             "CTL_UNSPEC" | "CTL_SYSCTL" => true,
 
-            // These were added in FreeBSD 12.2 and 13 (r352486),
-            // but they are just names for magic numbers that existed for ages.
-            "CTL_SYSCTL_DEBUG"
-            | "CTL_SYSCTL_NAME"
-            | "CTL_SYSCTL_NEXT"
-            | "CTL_SYSCTL_NAME2OID"
-            | "CTL_SYSCTL_OIDFMT"
-            | "CTL_SYSCTL_OIDDESCR"
-            | "CTL_SYSCTL_OIDLABEL" => true,
-
             // This was renamed in FreeBSD 12.2 and 13 (r350749).
             "IPPROTO_SEP" | "IPPROTO_DCCP" => true,
 
@@ -2104,33 +2028,8 @@ fn test_freebsd(target: &str) {
             // commit/06b00ceaa914a3907e4e27bad924f44612bae1d7
             "MINCORE_SUPER" if Some(13) <= freebsd_ver => true,
 
-            // Added in FreeBSD 12.0
-            "EINTEGRITY" if Some(11) == freebsd_ver => true,
-
-            // This was increased to 97 in FreeBSD 12.2 and 13.
-            // https://github.com/freebsd/freebsd/
-            // commit/72a21ba0f62da5e86a1c0b462aeb3f5ff849a1b7
-            "ELAST" if Some(12) == freebsd_ver => true,
-
-            // Added in FreeBSD 12.0 (r331279)
-            "GRND_NONBLOCK" | "GRND_RANDOM" if Some(11) == freebsd_ver => true,
             // Added in FreeBSD 13.0 (r356667)
             "GRND_INSECURE" if Some(13) > freebsd_ver => true,
-
-            // Added in FreeBSD 12.1 (r343964)
-            "PROC_ASLR_CTL"
-            | "PROC_ASLR_STATUS"
-            | "PROC_ASLR_FORCE_ENABLE"
-            | "PROC_ASLR_FORCE_DISABLE"
-            | "PROC_ASLR_NOFORCE"
-            | "PROC_ASLR_ACTIVE"
-                if Some(11) == freebsd_ver =>
-            {
-                true
-            }
-
-            // Added in FreeBSD 12.1 (r345228)
-            "PROC_PROCCTL_MD_MIN" if Some(11) == freebsd_ver => true,
 
             // Added in FreeBSD 13.0 (r349609)
             "PROC_PROTMAX_CTL"
@@ -2144,16 +2043,11 @@ fn test_freebsd(target: &str) {
                 true
             }
 
-            // Added in FreeBSD 12.1
-            "PT_GET_SC_RET" | "PT_GET_SC_ARGS" if Some(11) == freebsd_ver => true,
-
             // Added in in FreeBSD 13.0 (r367776 and r367287)
             "SCM_CREDS2" | "LOCAL_CREDS_PERSISTENT" if Some(13) > freebsd_ver => true,
 
             // Added in FreeBSD 14
             "SPACECTL_DEALLOC" if Some(14) > freebsd_ver => true,
-
-            "VM_TOTAL" if Some(11) == freebsd_ver => true,
 
             // Added in FreeBSD 13.
             "KERN_PROC_SIGFASTBLK"
@@ -2170,18 +2064,6 @@ fn test_freebsd(target: &str) {
             {
                 true
             }
-            // Added in FreeBSD 12.
-            "KERN_MAXPHYS"
-            | "KVME_FLAG_USER_WIRED"
-            | "TDP2_SBPAGES"
-            | "P2_ASLR_ENABLE"
-            | "P2_ASLR_DISABLE"
-            | "P2_ASLR_IGNSTART"
-            | "P_TREE_GRPEXITED"
-                if Some(12) > freebsd_ver =>
-            {
-                true
-            }
 
             // Added in freebsd 14.
             "IFCAP_MEXTPG" if Some(14) > freebsd_ver => true,
@@ -2192,8 +2074,6 @@ fn test_freebsd(target: &str) {
             {
                 true
             }
-            // Added in freebsd 12.
-            "IFF_NOGROUP" | "IFCAP_TXRTLMT" | "IFCAP_HWRXTSTMP" if Some(12) > freebsd_ver => true,
             // Added in FreeBSD 13.
             "PS_FST_TYPE_EVENTFD" if Some(13) > freebsd_ver => true,
 
@@ -2207,9 +2087,6 @@ fn test_freebsd(target: &str) {
             {
                 true
             }
-
-            // Added in FreeBSD 12.
-            "MNT_UNTRUSTED" | "MNT_VERIFIED" if Some(12) > freebsd_ver => true,
 
             // Added in FreeBSD 14.
             "PT_COREDUMP" | "PC_ALL" | "PC_COMPRESS" | "PT_GETREGSET" | "PT_SETREGSET"
@@ -2228,13 +2105,23 @@ fn test_freebsd(target: &str) {
             | "MFD_CLOEXEC"
             | "MFD_ALLOW_SEALING"
             | "MFD_HUGETLB"
+            | "MFD_HUGE_MASK"
+            | "MFD_HUGE_64KB"
+            | "MFD_HUGE_512KB"
+            | "MFD_HUGE_1MB"
+            | "MFD_HUGE_2MB"
+            | "MFD_HUGE_8MB"
+            | "MFD_HUGE_16MB"
+            | "MFD_HUGE_32MB"
+            | "MFD_HUGE_256MB"
+            | "MFD_HUGE_512MB"
+            | "MFD_HUGE_1GB"
+            | "MFD_HUGE_2GB"
+            | "MFD_HUGE_16GB"
                 if Some(13) > freebsd_ver =>
             {
                 true
             }
-
-            // Those were introduced in FreeBSD 12.
-            "TCP_FUNCTION_NAME_LEN_MAX" | "TCP_FASTOPEN_PSK_LEN" if Some(11) == freebsd_ver => true,
 
             // Flags introduced in FreeBSD 14.
             "TCP_MAXUNACKTIME"
@@ -2276,34 +2163,17 @@ fn test_freebsd(target: &str) {
             return true;
         }
         match ty {
-            // `mmsghdr` is not available in FreeBSD 10
-            "mmsghdr" if Some(10) == freebsd_ver => true,
-
-            // `max_align_t` is not available in FreeBSD 10
-            "max_align_t" if Some(10) == freebsd_ver => true,
-
             // `procstat` is a private struct
             "procstat" => true,
 
-            // `ptrace_sc_ret` is not available in FreeBSD 11
-            "ptrace_sc_ret" if Some(11) == freebsd_ver => true,
-
             // `spacectl_range` was introduced in FreeBSD 14
             "spacectl_range" if Some(14) > freebsd_ver => true,
-
-            // obsolete version
-            "vmtotal" if Some(11) == freebsd_ver => true,
 
             // `ptrace_coredump` introduced in FreeBSD 14.
             "ptrace_coredump" if Some(14) > freebsd_ver => true,
 
             // `sockcred2` is not available in FreeBSD 12.
             "sockcred2" if Some(13) > freebsd_ver => true,
-
-            // `tcp_fastopen` introduced in FreeBSD 12.
-            "tcp_fastopen" if Some(11) == freebsd_ver => true,
-            // `tcp_function_set` introduced in FreeBSD 12.
-            "tcp_function_set" if Some(11) == freebsd_ver => true,
 
             _ => false,
         }
@@ -2314,15 +2184,6 @@ fn test_freebsd(target: &str) {
         match name {
             // FIXME: https://github.com/rust-lang/libc/issues/1272
             "execv" | "execve" | "execvp" | "execvpe" | "fexecve" => true,
-
-            // These functions were added in FreeBSD 11:
-            "fdatasync" | "mq_getfd_np" | "sendmmsg" | "recvmmsg" if Some(10) == freebsd_ver => {
-                true
-            }
-
-            // This function changed its return type from `int` in FreeBSD10 to
-            // `ssize_t` in FreeBSD11:
-            "aio_waitcomplete" if Some(10) == freebsd_ver => true,
 
             // `fspacectl` was introduced in FreeBSD 14
             "fspacectl" if Some(14) > freebsd_ver => true,
@@ -2353,22 +2214,11 @@ fn test_freebsd(target: &str) {
                 true
             }
 
-            // Those were introduced in FreeBSD 12.
-            "flopen" | "flopenat" if Some(12) > freebsd_ver => true,
-
             // Added in FreeBSD 13.
             "getlocalbase" if Some(13) > freebsd_ver => true,
             "aio_readv" if Some(13) > freebsd_ver => true,
             "aio_writev" if Some(13) > freebsd_ver => true,
 
-            _ => false,
-        }
-    });
-
-    cfg.skip_signededness(move |c| {
-        match c {
-            // FIXME: has a different sign in FreeBSD10
-            "blksize_t" if Some(10) == freebsd_ver => true,
             _ => false,
         }
     });
@@ -2388,10 +2238,6 @@ fn test_freebsd(target: &str) {
             // FIXME: `sa_sigaction` has type `sighandler_t` but that type is
             // incorrect, see: https://github.com/rust-lang/libc/issues/1359
             ("sigaction", "sa_sigaction") => true,
-
-            // FIXME: in FreeBSD10 this field has type `char*` instead of
-            // `void*`:
-            ("stack_t", "ss_sp") if Some(10) == freebsd_ver => true,
 
             // conflicting with `p_type` macro from <resolve.h>.
             ("Elf32_Phdr", "p_type") => true,
@@ -2974,6 +2820,8 @@ fn test_linux(target: &str) {
         "linux/rtnetlink.h",
         "linux/sched.h",
         "linux/seccomp.h",
+        "linux/sched.h",
+        "linux/sock_diag.h",
         "linux/sockios.h",
         "linux/uinput.h",
         "linux/vm_sockets.h",
@@ -3124,6 +2972,8 @@ fn test_linux(target: &str) {
 
             // Requires glibc 2.33 or newer.
             "mallinfo2" => true,
+            // clone_args might differ b/w libc versions
+            "clone_args" => true,
 
             // Might differ between kernel versions
             "open_how" => true,
@@ -3341,6 +3191,9 @@ fn test_linux(target: &str) {
             // GRND_INSECURE was added in glibc-2.32
             "GRND_INSECURE" => true,
 
+            // present in recent kernels only
+            "PR_PAC_SET_ENABLED_KEYS" | "PR_PAC_GET_ENABLED_KEYS" => true,
+
             _ => false,
         }
     });
@@ -3489,7 +3342,9 @@ fn test_linux(target: &str) {
             && ((x86_64 || i686 || arm || riscv64) && gnu || x86_64_gnux32)
         ) ||
         // the `u` field is in fact an anonymous union
-        (gnu && struct_ == "ptrace_syscall_info" && (field == "u" || field == "pad"))
+        (gnu && struct_ == "ptrace_syscall_info" && (field == "u" || field == "pad")) ||
+        // the vregs field is a `__uint128_t` C's type.
+        (struct_ == "user_fpsimd_struct" && field == "vregs")
     });
 
     cfg.skip_roundtrip(move |s| match s {

@@ -13,7 +13,9 @@
     improper_ctypes,
     // This lint is renamed but we run CI for old stable rustc so should be here.
     redundant_semicolon,
-    redundant_semicolons
+    redundant_semicolons,
+    unused_macros,
+    unused_macro_rules,
 )]
 #![cfg_attr(libc_deny_warnings, deny(warnings))]
 // Attributes needed when building as part of the standard library
@@ -28,7 +30,7 @@
     feature = "rustc-dep-of-std",
     feature(native_link_modifiers, native_link_modifiers_bundle)
 )]
-#![cfg_attr(libc_const_extern_fn, feature(const_extern_fn))]
+#![cfg_attr(libc_const_extern_fn_unstable, feature(const_extern_fn))]
 
 #[macro_use]
 mod macros;

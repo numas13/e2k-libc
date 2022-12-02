@@ -346,14 +346,6 @@ cfg_if! {
     } else if #[cfg(target_os = "emscripten")] {
         #[link(name = "c")]
         extern {}
-    } else if #[cfg(all(target_os = "netbsd",
-                        feature = "rustc-dep-of-std",
-                        target_vendor = "rumprun"))] {
-        // Since we don't use -nodefaultlibs on Rumprun, libc is always pulled
-        // in automatically by the linker. We avoid passing it explicitly, as it
-        // causes some versions of binutils to crash with an assertion failure.
-        #[link(name = "m")]
-        extern {}
     } else if #[cfg(any(target_os = "macos",
                         target_os = "ios",
                         target_os = "watchos",
@@ -901,6 +893,8 @@ extern "C" {
     pub fn setpgid(pid: pid_t, pgid: pid_t) -> ::c_int;
     pub fn setsid() -> pid_t;
     pub fn setuid(uid: uid_t) -> ::c_int;
+    pub fn setreuid(ruid: uid_t, euid: uid_t) -> ::c_int;
+    pub fn setregid(rgid: gid_t, egid: gid_t) -> ::c_int;
     #[cfg_attr(
         all(target_os = "macos", target_arch = "x86"),
         link_name = "sleep$UNIX2003"
