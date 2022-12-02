@@ -1732,6 +1732,9 @@ fn test_android(target: &str) {
             // linux 5.12 min
             "MPOL_F_NUMA_BALANCING" => true,
 
+            // GRND_INSECURE was added in platform-tools-30.0.0
+            "GRND_INSECURE" => true,
+
             _ => false,
         }
     });
@@ -2251,6 +2254,9 @@ fn test_freebsd(target: &str) {
                 true
             }
 
+            // Added in FreeBSD 14
+            "LIO_READV" | "LIO_WRITEV" | "LIO_VECTORED" if Some(14) > freebsd_ver => true,
+
             _ => false,
         }
     });
@@ -2352,6 +2358,8 @@ fn test_freebsd(target: &str) {
 
             // Added in FreeBSD 13.
             "getlocalbase" if Some(13) > freebsd_ver => true,
+            "aio_readv" if Some(13) > freebsd_ver => true,
+            "aio_writev" if Some(13) > freebsd_ver => true,
 
             _ => false,
         }
@@ -3330,6 +3338,9 @@ fn test_linux(target: &str) {
             // linux 5.17 min
             "PR_SET_VMA" | "PR_SET_VMA_ANON_NAME" => true,
 
+            // GRND_INSECURE was added in glibc-2.32
+            "GRND_INSECURE" => true,
+
             _ => false,
         }
     });
@@ -3409,6 +3420,9 @@ fn test_linux(target: &str) {
 
             // Not defined in uclibc as of 1.0.34
             "gettid" if uclibc => true,
+
+            // Needs musl 1.2.3 or later.
+            "pthread_getname_np" if musl => true,
 
             _ => false,
         }
