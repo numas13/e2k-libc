@@ -424,6 +424,9 @@ STATX_ATTR_COMPRESSED
 STATX_ATTR_ENCRYPTED
 STATX_ATTR_IMMUTABLE
 STATX_ATTR_NODUMP
+STATX_ATTR_MOUNT_ROOT
+STATX_ATTR_VERITY
+STATX_ATTR_DAX
 STATX_BASIC_STATS
 STATX_BLOCKS
 STATX_BTIME
@@ -589,9 +592,11 @@ futimes
 getauxval
 getentropy
 getgrent_r
+fgetgrent_r
 getloadavg
 getpt
 getpwent_r
+fgetpwent_r
 getpwnam_r
 getspent_r
 getutxent
@@ -647,3 +652,5 @@ timex
 utmpname
 utmpx
 utmpxname
+euidaccess
+eaccess

@@ -231,6 +231,8 @@ fn test_apple(target: &str) {
         "netinet/ip.h",
         "netinet/tcp.h",
         "netinet/udp.h",
+        "os/lock.h",
+        "os/signpost.h",
         "poll.h",
         "pthread.h",
         "pthread_spis.h",
@@ -2442,6 +2444,8 @@ fn test_emscripten(target: &str) {
             // Just pass all these through, no need for a "struct" prefix
             "FILE" | "fd_set" | "Dl_info" | "DIR" => ty.to_string(),
 
+            "os_unfair_lock" => "struct os_unfair_lock_s".to_string(),
+
             t if is_union => format!("union {}", t),
 
             t if t.ends_with("_t") => t.to_string(),
@@ -3069,6 +3073,7 @@ fn test_linux(target: &str) {
 
             // FIXME: Unignore once we update Ubuntu to 22.04
             "mallinfo2" if sparc64 => true,
+            "ptrace_rseq_configuration" if sparc64 => true,
 
             _ => false,
         }
@@ -3316,7 +3321,12 @@ fn test_linux(target: &str) {
             | "IFLA_ALT_IFNAME"
             | "IFLA_PERM_ADDRESS"
             | "IFLA_PROTO_DOWN_REASON"
+            | "STATX_ATTR_MOUNT_ROOT"
+            | "STATX_ATTR_VERITY"
+            | "STATX_ATTR_DAX"
             if sparc64 => true,
+            // Added in Linux 5.13
+            "PTRACE_GET_RSEQ_CONFIGURATION" if sparc64 => true,
 
             _ => false,
         }
