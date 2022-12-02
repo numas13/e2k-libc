@@ -3195,6 +3195,9 @@ fn test_linux(target: &str) {
             // present in recent kernels only
             "PR_PAC_SET_ENABLED_KEYS" | "PR_PAC_GET_ENABLED_KEYS" => true,
 
+            // Added in Linux 5.14
+            "FUTEX_LOCK_PI2" => true,
+
             _ => false,
         }
     });
@@ -3277,6 +3280,12 @@ fn test_linux(target: &str) {
 
             // Needs musl 1.2.3 or later.
             "pthread_getname_np" if musl => true,
+
+            // pthread_sigqueue uses sigval, which was initially declared
+            // as a struct but should be defined as a union. However due
+            // to the issues described here: https://github.com/rust-lang/libc/issues/2816
+            // it can't be changed from struct.
+            "pthread_sigqueue" => true,
 
             _ => false,
         }
