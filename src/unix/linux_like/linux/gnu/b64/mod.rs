@@ -70,6 +70,7 @@ s! {
         pub sem_otime: ::time_t,
         #[cfg(not(any(
             target_arch = "aarch64",
+            target_arch = "loongarch64",
             target_arch = "mips64",
             target_arch = "powerpc64",
             target_arch = "riscv64",
@@ -79,6 +80,7 @@ s! {
         pub sem_ctime: ::time_t,
         #[cfg(not(any(
             target_arch = "aarch64",
+            target_arch = "loongarch64",
             target_arch = "mips64",
             target_arch = "powerpc64",
             target_arch = "riscv64",
@@ -123,6 +125,9 @@ cfg_if! {
     } else if #[cfg(any(target_arch = "e2k64"))] {
         mod e2k64;
         pub use self::e2k64::*;
+    } else if #[cfg(any(target_arch = "loongarch64"))] {
+        mod loongarch64;
+        pub use self::loongarch64::*;
     } else {
         // Unknown target_arch
     }

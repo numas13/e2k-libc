@@ -10,6 +10,7 @@ macro_rules! expand_align {
                           target_arch = "riscv64",
                           target_arch = "riscv32",
                           target_arch = "e2k64",
+                          target_arch = "loongarch64",
                           all(target_arch = "aarch64",
                               target_env = "musl")))]
                 __align: [::c_int; 0],
@@ -21,6 +22,7 @@ macro_rules! expand_align {
                               target_arch = "riscv64",
                               target_arch = "riscv32",
                               target_arch = "e2k64",
+                              target_arch = "loongarch64",
                               all(target_arch = "aarch64",
                                   target_env = "musl"))))]
                 __align: [::c_long; 0],

@@ -434,6 +434,7 @@ fn test_openbsd(target: &str) {
         "signal.h",
         "string.h",
         "sys/file.h",
+        "sys/futex.h",
         "sys/ioctl.h",
         "sys/ipc.h",
         "sys/mman.h",
@@ -504,6 +505,9 @@ fn test_openbsd(target: &str) {
             // Removed in OpenBSD 6.5
             // https://marc.info/?l=openbsd-cvs&m=154723400730318
             "mincore" => true,
+
+            // futex() has volatile arguments, but that doesn't exist in Rust.
+            "futex" => true,
 
             _ => false,
         }
@@ -1935,6 +1939,7 @@ fn test_freebsd(target: &str) {
                 "sys/ucontext.h",
                 "sys/uio.h",
                 "sys/ktrace.h",
+                "sys/umtx.h",
                 "sys/un.h",
                 "sys/user.h",
                 "sys/utsname.h",
@@ -3688,6 +3693,7 @@ fn test_haiku(target: &str) {
     cfg.flag("-Wno-deprecated-declarations");
     cfg.define("__USE_GNU", Some("1"));
     cfg.define("_GNU_SOURCE", None);
+    cfg.language(ctest::Lang::CXX);
 
     // POSIX API
     headers! { cfg:
@@ -3731,7 +3737,6 @@ fn test_haiku(target: &str) {
                "net/if_types.h",
                "net/route.h",
                "netdb.h",
-               "netinet/icmp6.h",
                "netinet/in.h",
                "netinet/ip.h",
                "netinet/ip6.h",
@@ -3889,6 +3894,9 @@ fn test_haiku(target: &str) {
 
             "get_cpuid" => true,
 
+            // uses varargs parameter
+            "ioctl" => true,
+
             _ => false,
         }
     });
@@ -3962,6 +3970,9 @@ fn test_haiku(target: &str) {
             | "team_usage_info" | "thread_info" | "cpu_info" | "system_info"
             | "object_wait_info" | "image_info" | "attr_info" | "index_info" | "fs_info"
             | "FILE" | "DIR" | "Dl_info" => ty.to_string(),
+
+            // enums don't need a prefix
+            "directory_which" | "path_base_directory" => ty.to_string(),
 
             // is actually a union
             "sigval" => format!("union sigval"),
