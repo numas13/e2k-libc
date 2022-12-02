@@ -275,4 +275,14 @@ cfg_if! {
     }
 }
 
+cfg_if! {
+    if #[cfg(target_arch = "e2k64")] {
+        pub const RLIMIT_ARCH_NUM: ::__rlimit_resource_t = 10001;
+        pub const RLIMIT_P_STACK: ::__rlimit_resource_t = 10001;
+        pub const RLIMIT_PC_STACK: ::__rlimit_resource_t = 10002;
+        pub const RLIMIT_NLIMITS_EXT: ::__rlimit_resource_t = 2;
+        pub const RLIM_NLIMITS_EXT: ::__rlimit_resource_t = 2;
+    }
+}
+
 pub const RLIM_INFINITY: ::rlim_t = !0;
