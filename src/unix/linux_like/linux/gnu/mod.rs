@@ -1353,6 +1353,7 @@ extern "C" {
 cfg_if! {
     if #[cfg(any(target_arch = "x86",
                  target_arch = "arm",
+                 target_arch = "m68k",
                  target_arch = "mips",
                  target_arch = "powerpc",
                  target_arch = "sparc",

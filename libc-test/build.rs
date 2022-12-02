@@ -182,6 +182,7 @@ fn test_apple(target: &str) {
         "aio.h",
         "CommonCrypto/CommonCrypto.h",
         "CommonCrypto/CommonRandom.h",
+        "copyfile.h",
         "crt_externs.h",
         "ctype.h",
         "dirent.h",
@@ -746,6 +747,7 @@ fn test_solarish(target: &str) {
         "ifaddrs.h",
         "langinfo.h",
         "limits.h",
+        "link.h",
         "locale.h",
         "mqueue.h",
         "net/if.h",
@@ -774,17 +776,21 @@ fn test_solarish(target: &str) {
         "sys/file.h",
         "sys/filio.h",
         "sys/ioctl.h",
+        "sys/lgrp_user.h",
         "sys/loadavg.h",
         "sys/mman.h",
         "sys/mount.h",
         "sys/priv.h",
         "sys/pset.h",
+        "sys/random.h",
         "sys/resource.h",
+        "sys/sendfile.h",
         "sys/socket.h",
         "sys/stat.h",
         "sys/statvfs.h",
         "sys/stropts.h",
         "sys/shm.h",
+        "sys/systeminfo.h",
         "sys/time.h",
         "sys/times.h",
         "sys/timex.h",
@@ -797,6 +803,7 @@ fn test_solarish(target: &str) {
         "termios.h",
         "thread.h",
         "time.h",
+        "priv.h",
         "ucontext.h",
         "unistd.h",
         "utime.h",
@@ -804,12 +811,9 @@ fn test_solarish(target: &str) {
         "wchar.h",
     }
 
-    cfg.skip_type(move |ty| {
-        match ty {
-            // sighandler_t is not present here
-            "sighandler_t" => true,
-            _ => false,
-        }
+    cfg.skip_type(move |ty| match ty {
+        "sighandler_t" => true,
+        _ => false,
     });
 
     cfg.type_name(move |ty, is_struct, is_union| match ty {
@@ -897,6 +901,15 @@ fn test_solarish(target: &str) {
             "door_arg_t" if field.ends_with("_ptr") => true,
             "door_arg_t" if field.ends_with("rbuf") => true,
 
+            // anonymous union challenges
+            "fpregset_t" if field == "fp_reg_set" => true,
+
+            // The LX brand (integrated into some illumos distros) commandeered several of the
+            // `uc_filler` fields to use for brand-specific state.
+            "ucontext_t" if is_illumos && (field == "uc_filler" || field == "uc_brand_data") => {
+                true
+            }
+
             _ => false,
         }
     });
@@ -928,6 +941,9 @@ fn test_solarish(target: &str) {
             "getpwent_r" | "getgrent_r" | "updwtmpx" if is_illumos => true,
             "madvise" | "mprotect" if is_illumos => true,
             "door_call" | "door_return" | "door_create" if is_illumos => true,
+
+            // Not visible when build with _XOPEN_SOURCE=700
+            "mmapobj" | "mmap64" | "meminfo" | "getpagesizes" | "getpagesizes2" => true,
 
             // These functions may return int or void depending on the exact
             // configuration of the compilation environment, but the return
@@ -1576,6 +1592,7 @@ fn test_android(target: &str) {
                 "linux/if_tun.h",
                 "linux/magic.h",
                 "linux/memfd.h",
+                "linux/mempolicy.h",
                 "linux/module.h",
                 "linux/net_tstamp.h",
                 "linux/netfilter/nfnetlink.h",
@@ -1636,6 +1653,9 @@ fn test_android(target: &str) {
             // FIXME: `sighandler_t` type is incorrect, see:
             // https://github.com/rust-lang/libc/issues/1359
             "sighandler_t" => true,
+
+            // These are tested in the `linux_elf.rs` file.
+            "Elf64_Phdr" | "Elf32_Phdr" => true,
             _ => false,
         }
     });
@@ -1653,12 +1673,33 @@ fn test_android(target: &str) {
             // 'private' type
             "prop_info" => true,
 
+            // These are tested in the `linux_elf.rs` file.
+            "Elf64_Phdr" | "Elf32_Phdr" => true,
+
             _ => false,
         }
     });
 
     cfg.skip_const(move |name| {
         match name {
+            // The IPV6 constants are tested in the `linux_ipv6.rs` tests:
+            | "IPV6_FLOWINFO"
+            | "IPV6_FLOWLABEL_MGR"
+            | "IPV6_FLOWINFO_SEND"
+            | "IPV6_FLOWINFO_FLOWLABEL"
+            | "IPV6_FLOWINFO_PRIORITY"
+            // The F_ fnctl constants are tested in the `linux_fnctl.rs` tests:
+            | "F_CANCELLK"
+            | "F_ADD_SEALS"
+            | "F_GET_SEALS"
+            | "F_SEAL_SEAL"
+            | "F_SEAL_SHRINK"
+            | "F_SEAL_GROW"
+            | "F_SEAL_WRITE" => true,
+
+            // The `ARPHRD_CAN` is tested in the `linux_if_arp.rs` tests:
+            "ARPHRD_CAN" => true,
+
             // FIXME: deprecated: not available in any header
             // See: https://github.com/rust-lang/libc/issues/1356
             "ENOATTR" => true,
@@ -1676,6 +1717,7 @@ fn test_android(target: &str) {
 
             // FIXME: conflicts with standard C headers and is tested in
             // `linux_termios.rs` below:
+            "BOTHER" => true,
             "IBSHIFT" => true,
             "TCGETS2" | "TCSETS2" | "TCSETSW2" | "TCSETSF2" => true,
 
@@ -2155,7 +2197,11 @@ fn test_freebsd(target: &str) {
             "MNT_UNTRUSTED" | "MNT_VERIFIED" if Some(12) > freebsd_ver => true,
 
             // Added in FreeBSD 14.
-            "PT_COREDUMP" | "PC_ALL" | "PC_COMPRESS" if Some(14) > freebsd_ver => true,
+            "PT_COREDUMP" | "PC_ALL" | "PC_COMPRESS" | "PT_GETREGSET" | "PT_SETREGSET"
+                if Some(14) > freebsd_ver =>
+            {
+                true
+            }
 
             // Added in FreeBSD 14.
             "F_KINFO" => true, // FIXME: depends how frequent freebsd 14 is updated on CI, this addition went this week only.
@@ -2168,6 +2214,27 @@ fn test_freebsd(target: &str) {
             | "MFD_ALLOW_SEALING"
             | "MFD_HUGETLB"
                 if Some(13) > freebsd_ver =>
+            {
+                true
+            }
+
+            // Those were introduced in FreeBSD 12.
+            "TCP_FUNCTION_NAME_LEN_MAX" | "TCP_FASTOPEN_PSK_LEN" if Some(11) == freebsd_ver => true,
+
+            // Flags introduced in FreeBSD 14.
+            "TCP_MAXUNACKTIME"
+            | "TCP_MAXPEAKRATE"
+            | "TCP_IDLE_REDUCE"
+            | "TCP_REMOTE_UDP_ENCAPS_PORT"
+            | "TCP_DELACK"
+            | "TCP_FIN_IS_RST"
+            | "TCP_LOG_LIMIT"
+            | "TCP_SHARED_CWND_ALLOWED"
+            | "TCP_PROC_ACCOUNTING"
+            | "TCP_USE_CMP_ACKS"
+            | "TCP_PERF_INFO"
+            | "TCP_LRD"
+                if Some(14) > freebsd_ver =>
             {
                 true
             }
@@ -2214,6 +2281,11 @@ fn test_freebsd(target: &str) {
 
             // `sockcred2` is not available in FreeBSD 12.
             "sockcred2" if Some(13) > freebsd_ver => true,
+
+            // `tcp_fastopen` introduced in FreeBSD 12.
+            "tcp_fastopen" if Some(11) == freebsd_ver => true,
+            // `tcp_function_set` introduced in FreeBSD 12.
+            "tcp_function_set" if Some(11) == freebsd_ver => true,
 
             _ => false,
         }
@@ -2262,6 +2334,9 @@ fn test_freebsd(target: &str) {
             "memfd_create" | "shm_create_largepage" | "shm_rename" if Some(13) > freebsd_ver => {
                 true
             }
+
+            // Those were introduced in FreeBSD 12.
+            "flopen" | "flopenat" if Some(12) > freebsd_ver => true,
 
             _ => false,
         }
@@ -2853,6 +2928,7 @@ fn test_linux(target: &str) {
         "linux/keyctl.h",
         "linux/magic.h",
         "linux/memfd.h",
+        "linux/mempolicy.h",
         "linux/mman.h",
         "linux/module.h",
         "linux/net_tstamp.h",
