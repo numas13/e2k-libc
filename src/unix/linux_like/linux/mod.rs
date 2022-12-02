@@ -1441,6 +1441,7 @@ pub const EM_PJ: u16 = 91;
 pub const EM_OPENRISC: u16 = 92;
 pub const EM_ARC_A5: u16 = 93;
 pub const EM_XTENSA: u16 = 94;
+pub const EM_MCST_ELBRUS: u16 = 175;
 pub const EM_AARCH64: u16 = 183;
 pub const EM_TILEPRO: u16 = 188;
 pub const EM_TILEGX: u16 = 191;
