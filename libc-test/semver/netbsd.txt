@@ -1254,6 +1254,7 @@ getlastlogx
 getline
 getloadavg
 getnameinfo
+getopt_long
 getpeereid
 getpriority
 getprogname
@@ -1535,3 +1536,9 @@ wait4
 waitid
 dirname
 basename
+XATTR_CREATE
+XATTR_REPLACE
+EXTATTR_NAMESPACE_EMPTY
+extattr_list_fd
+extattr_list_file
+extattr_list_link

@@ -199,6 +199,7 @@ fn test_apple(target: &str) {
         "errno.h",
         "execinfo.h",
         "fcntl.h",
+        "getopt.h",
         "glob.h",
         "grp.h",
         "iconv.h",
@@ -421,6 +422,7 @@ fn test_openbsd(target: &str) {
         "errno.h",
         "execinfo.h",
         "fcntl.h",
+        "getopt.h",
         "libgen.h",
         "limits.h",
         "link.h",
@@ -769,6 +771,7 @@ fn test_solarish(target: &str) {
         "errno.h",
         "execinfo.h",
         "fcntl.h",
+        "getopt.h",
         "glob.h",
         "grp.h",
         "ifaddrs.h",
@@ -997,6 +1000,7 @@ fn test_netbsd(target: &str) {
         "elf.h",
         "errno.h",
         "fcntl.h",
+        "getopt.h",
         "libgen.h",
         "limits.h",
         "link.h",
@@ -1038,6 +1042,7 @@ fn test_netbsd(target: &str) {
         "string.h",
         "sys/endian.h",
         "sys/exec_elf.h",
+        "sys/xattr.h",
         "sys/extattr.h",
         "sys/file.h",
         "sys/ioctl.h",
@@ -1207,6 +1212,7 @@ fn test_dragonflybsd(target: &str) {
         "errno.h",
         "execinfo.h",
         "fcntl.h",
+        "getopt.h",
         "glob.h",
         "grp.h",
         "ifaddrs.h",
@@ -1510,6 +1516,7 @@ fn test_android(target: &str) {
                "elf.h",
                "errno.h",
                "fcntl.h",
+               "getopt.h",
                "grp.h",
                "ifaddrs.h",
                "libgen.h",
@@ -1627,6 +1634,7 @@ fn test_android(target: &str) {
                 "linux/seccomp.h",
                 "linux/sched.h",
                 "linux/sockios.h",
+                "linux/uinput.h",
                 "linux/vm_sockets.h",
                 "linux/wait.h",
 
@@ -1663,6 +1671,17 @@ fn test_android(target: &str) {
             s if s.ends_with("_nsec") && struct_.starts_with("stat") => s.to_string(),
             // FIXME: appears that `epoll_event.data` is an union
             "u64" if struct_ == "epoll_event" => "data.u64".to_string(),
+            // The following structs have a field called `type` in C,
+            // but `type` is a Rust keyword, so these fields are translated
+            // to `type_` in Rust.
+            "type_"
+                if struct_ == "input_event"
+                    || struct_ == "input_mask"
+                    || struct_ == "ff_effect" =>
+            {
+                "type".to_string()
+            }
+
             s => s.to_string(),
         }
     });
@@ -1792,6 +1811,8 @@ fn test_android(target: &str) {
         (struct_ == "ifaddrs" && field == "ifa_ifu") ||
         // sigval is actually a union, but we pretend it's a struct
         (struct_ == "sigevent" && field == "sigev_value") ||
+        // this one is an anonymous union
+        (struct_ == "ff_effect" && field == "u") ||
         // FIXME: `sa_sigaction` has type `sighandler_t` but that type is
         // incorrect, see: https://github.com/rust-lang/libc/issues/1359
         (struct_ == "sigaction" && field == "sa_sigaction") ||
@@ -1869,6 +1890,7 @@ fn test_freebsd(target: &str) {
                 "errno.h",
                 "execinfo.h",
                 "fcntl.h",
+                "getopt.h",
                 "glob.h",
                 "grp.h",
                 "iconv.h",
@@ -1882,6 +1904,7 @@ fn test_freebsd(target: &str) {
                 "machine/elf.h",
                 "machine/reg.h",
                 "malloc_np.h",
+                "memstat.h",
                 "mqueue.h",
                 "net/bpf.h",
                 "net/if.h",
@@ -2087,6 +2110,15 @@ fn test_freebsd(target: &str) {
             | "PROC_PROTMAX_FORCE_DISABLE"
             | "PROC_PROTMAX_NOFORCE"
             | "PROC_PROTMAX_ACTIVE"
+            | "PROC_NO_NEW_PRIVS_CTL"
+            | "PROC_NO_NEW_PRIVS_STATUS"
+            | "PROC_NO_NEW_PRIVS_ENABLE"
+            | "PROC_NO_NEW_PRIVS_DISABLE"
+            | "PROC_WXMAP_CTL"
+            | "PROC_WXMAP_STATUS"
+            | "PROC_WX_MAPPINGS_PERMIT"
+            | "PROC_WX_MAPPINGS_DISALLOW_EXEC"
+            | "PROC_WXORX_ENFORCE"
                 if Some(13) > freebsd_ver =>
             {
                 true
@@ -2232,6 +2264,10 @@ fn test_freebsd(target: &str) {
             // `shm_largepage_conf` was introduced in FreeBSD 13.
             "shm_largepage_conf" if Some(13) > freebsd_ver => true,
 
+            // Those are private types
+            "memory_type" => true,
+            "memory_type_list" => true,
+
             _ => false,
         }
     });
@@ -2275,6 +2311,7 @@ fn test_freebsd(target: &str) {
             "getlocalbase" if Some(13) > freebsd_ver => true,
             "aio_readv" if Some(13) > freebsd_ver => true,
             "aio_writev" if Some(13) > freebsd_ver => true,
+            "copy_file_range" if Some(13) > freebsd_ver => true,
 
             _ => false,
         }
@@ -2775,6 +2812,7 @@ fn test_linux(target: &str) {
                "dlfcn.h",
                "elf.h",
                "fcntl.h",
+               "getopt.h",
                "glob.h",
                [gnu]: "gnu/libc-version.h",
                "grp.h",
