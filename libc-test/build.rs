@@ -3124,7 +3124,7 @@ fn test_linux(target: &str) {
                 return true;
             }
         }
-        if musl || sparc64 {
+        if musl || sparc64 || e2k64 {
             // FIXME: Requires >= 5.4.1 kernel headers
             if name.starts_with("J1939")
                 || name.starts_with("SO_J1939")
@@ -3189,11 +3189,11 @@ fn test_linux(target: &str) {
 
             // FIXME: Not currently available in headers
             "P_PIDFD" if mips => true,
-            "SYS_pidfd_open" if mips | e2k64 => true,
+            "SYS_pidfd_open" if mips => true,
 
             // FIXME: Not currently available in headers on MIPS
             // Not yet implemented on sparc64
-            "SYS_clone3" if mips | sparc64 | e2k64 => true,
+            "SYS_clone3" if mips | sparc64 => true,
 
             // FIXME: Not defined on ARM, gnueabihf, MIPS, musl, PowerPC, riscv64, s390x, and sparc64.
             "SYS_memfd_secret" if arm | gnueabihf | mips | musl | ppc | riscv64 | s390x | sparc64 => true,
@@ -3215,13 +3215,6 @@ fn test_linux(target: &str) {
             | "SW_MAX"
             | "SW_CNT"
                 if mips || ppc64 || riscv64 || sparc64 => true,
-            // absent or unsupported in glibc-2.29
-            | "MSG_COPY"
-            | "SHM_EXEC"
-            | "IPV6_ROUTER_ALERT_ISOLATE"
-            | "UDP_GRO"
-            | "MAP_SYNC"
-                if e2k64 => true,
 
             // FIXME: Not currently available in headers on ARM, MIPS and musl.
             "NETLINK_GET_STRICT_CHK" if arm || mips || musl => true,
@@ -3282,7 +3275,7 @@ fn test_linux(target: &str) {
             | "RESOLVE_IN_ROOT"
             | "RESOLVE_NO_MAGICLINKS"
             | "RESOLVE_NO_SYMLINKS"
-            | "RESOLVE_NO_XDEV" if musl || sparc64 => true,
+            | "RESOLVE_NO_XDEV" if musl || sparc64 || e2k64 => true,
 
             // FIXME: requires Linux >= 5.4:
             | "CAN_J1939"
@@ -3299,7 +3292,7 @@ fn test_linux(target: &str) {
             | "CLOSE_RANGE_CLOEXEC" if musl || sparc64 => true,
 
             // FIXME: requires Linux >= 5.12:
-            "MPOL_F_NUMA_BALANCING" if musl || sparc64 => true,
+            "MPOL_F_NUMA_BALANCING" if musl || sparc64 || e2k64 => true,
 
             // FIXME: Requires more recent kernel headers
             | "NFNL_SUBSYS_COUNT" // bumped in v5.14
@@ -3311,7 +3304,7 @@ fn test_linux(target: &str) {
             | "NFULA_VLAN_UNSPEC" // v5.4+
             | "RTNLGRP_NEXTHOP" // linux v5.3+
             | "RTNLGRP_BRVLAN" // linux v5.6+
-            if musl || sparc64 => true,
+            if musl || sparc64 || e2k64 => true,
 
             // FIXME: Unignore once we update Ubuntu to 22.04
             | "VMADDR_CID_LOCAL"
@@ -3409,7 +3402,7 @@ fn test_linux(target: &str) {
             "getnameinfo" if uclibc => true,
 
             // FIXME: This needs musl 1.2.2 or later.
-            "gettid" if musl || e2k64 => true,
+            "gettid" if musl => true,
 
             // Needs glibc 2.33 or later.
             "mallinfo2" => true,
@@ -3506,7 +3499,7 @@ fn test_linux(target: &str) {
         (struct_ == "timex" && field.starts_with("__unused")) ||
         // FIXME: It now takes mode_t since glibc 2.31 on some targets.
         (struct_ == "ipc_perm" && field == "mode"
-            && ((x86_64 || i686 || arm || riscv64) && gnu || x86_64_gnux32)
+            && ((x86_64 || i686 || arm || riscv64 || e2k64) && gnu || x86_64_gnux32)
         ) ||
         // the `u` field is in fact an anonymous union
         (gnu && struct_ == "ptrace_syscall_info" && (field == "u" || field == "pad")) ||
