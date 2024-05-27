@@ -393,7 +393,6 @@ pub const POSIX_FADV_DONTNEED: ::c_int = 4;
 pub const POSIX_FADV_NOREUSE: ::c_int = 5;
 
 pub const VEOF: usize = 4;
-pub const __SIZEOF_PTHREAD_RWLOCK_T: usize = 56;
 
 pub const RTLD_DEEPBIND: ::c_int = 0x8;
 pub const RTLD_GLOBAL: ::c_int = 0x100;
@@ -587,6 +586,9 @@ pub const EFD_CLOEXEC: ::c_int = 0x80000;
 pub const __SIZEOF_PTHREAD_CONDATTR_T: usize = 4;
 pub const __SIZEOF_PTHREAD_MUTEX_T: usize = 40;
 pub const __SIZEOF_PTHREAD_MUTEXATTR_T: usize = 4;
+pub const __SIZEOF_PTHREAD_RWLOCK_T: usize = 56;
+pub const __SIZEOF_PTHREAD_BARRIER_T: usize = 32;
+pub const __SIZEOF_PTHREAD_BARRIERATTR_T: usize = 4;
 
 align_const! {
     #[cfg(target_endian = "little")]
