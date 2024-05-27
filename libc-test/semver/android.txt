@@ -807,7 +807,10 @@ IN_CREATE
 IN_DELETE
 IN_DELETE_SELF
 IN_DONT_FOLLOW
+IN_EXCL_UNLINK
 IN_IGNORED
+IN_MASK_CREATE
+IN_MASK_ADD
 IN_ISDIR
 IN_MODIFY
 IN_MOVE
@@ -2851,7 +2854,10 @@ arphdr
 arpreq
 arpreq_old
 atexit
+atof
 atoi
+atol
+atoll
 bind
 blkcnt_t
 blksize_t
@@ -3501,7 +3507,9 @@ strtod
 strtof
 strtok
 strtol
+strtoll
 strtoul
+strtoull
 strxfrm
 suseconds_t
 swapoff
