@@ -640,6 +640,7 @@ IPV6_HOPLIMIT
 IPV6_JOIN_GROUP
 IPV6_LEAVE_GROUP
 IPV6_PKTINFO
+IPV6_RECVHOPLIMIT
 IPV6_RECVPKTINFO
 IPV6_RECVTCLASS
 IPV6_TCLASS
@@ -649,6 +650,7 @@ IP_PKTINFO
 IP_RECVDSTADDR
 IP_RECVIF
 IP_RECVTOS
+IP_RECVTTL
 IP_TOS
 ITIMER_PROF
 ITIMER_REAL
@@ -1033,11 +1035,13 @@ OXTABS
 O_ASYNC
 O_DSYNC
 O_EVTONLY
+O_EXEC
 O_EXLOCK
 O_FSYNC
 O_NDELAY
 O_NOCTTY
 O_NOFOLLOW_ANY
+O_SEARCH
 O_SHLOCK
 O_SYMLINK
 O_SYNC
@@ -1364,6 +1368,7 @@ TAB1
 TAB2
 TAB3
 TABDLY
+TCP_CONNECTION_INFO
 TCP_FASTOPEN
 TCP_KEEPALIVE
 TCP_KEEPCNT
@@ -1915,6 +1920,7 @@ getattrlistbulk
 getdate
 getdomainname
 getdtablesize
+getentropy
 getfsstat
 getgrent
 getgrgid
@@ -2212,6 +2218,7 @@ shmid_ds
 sigaltstack
 sigevent
 siginfo_t
+sigsuspend
 sigwait
 sockaddr_ctl
 sockaddr_dl
@@ -2222,6 +2229,7 @@ statfs
 strcasecmp
 strcasestr
 strftime
+strftime_l
 strncasecmp
 strndup
 strptime
@@ -2242,6 +2250,7 @@ task_info
 task_inspect_t
 task_terminate
 task_threads
+tcp_connection_info
 telldir
 thread_basic_info_t
 thread_extended_info_t
@@ -2264,6 +2273,8 @@ uselocale
 utimensat
 utmpx
 utmpxname
+vm_allocate
+vm_deallocate
 vm_inherit_t
 vm_map_t
 vm_prot_t
@@ -2275,3 +2286,21 @@ wait4
 waitid
 xsw_usage
 xucred
+_PC_NAME_CHARS_MAX
+_PC_CASE_SENSITIVE
+_PC_CASE_PRESERVING
+_PC_EXTENDED_SECURITY_NP
+_PC_AUTH_OPAQUE_NP
+_PC_2_SYMLINKS
+_PC_ALLOC_SIZE_MIN
+_PC_ASYNC_IO
+_PC_FILESIZEBITS
+_PC_PRIO_IO
+_PC_REC_INCR_XFER_SIZE
+_PC_REC_MAX_XFER_SIZE
+_PC_REC_MIN_XFER_SIZE
+_PC_REC_XFER_ALIGN
+_PC_SYMLINK_MAX
+_PC_SYNC_IO
+_PC_XATTR_SIZE_BITS
+_PC_MIN_HOLE_SIZE

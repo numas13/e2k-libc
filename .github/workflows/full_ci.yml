@@ -1,16 +1,14 @@
-name: CI (bors)
+name: full CI
 
 on:
-  push:
+  merge_group:
+  pull_request:
     branches:
-      - auto-libc
-      - try
+      - libc-0.2
 
-permissions: {}
 jobs:
   docker_linux_tier1:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: Docker Linux Tier1
@@ -23,9 +21,6 @@ jobs:
           x86_64-unknown-linux-gnu,
         ]
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: TARGET=${{ matrix.target }} sh ./ci/install-rust.sh
@@ -34,11 +29,10 @@ jobs:
 
   macos:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: macOS
-    runs-on: macos-12
+    runs-on: macos-13
     strategy:
       fail-fast: true
       matrix:
@@ -46,9 +40,6 @@ jobs:
           x86_64-apple-darwin,
         ]
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: TARGET=${{ matrix.target }} sh ./ci/install-rust.sh
@@ -57,7 +48,6 @@ jobs:
 
   windows:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: Windows
@@ -73,17 +63,12 @@ jobs:
               ARCH_BITS: 64
               ARCH: x86_64
           - target: x86_64-pc-windows-msvc
-          # Disabled because broken:
-          #  https://github.com/rust-lang/libc/issues/1592
           #- target: i686-pc-windows-gnu
           #  env:
           #    ARCH_BITS: 32
           #    ARCH: i686
           - target: i686-pc-windows-msvc
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Self-update rustup
         run: rustup self update
@@ -97,15 +82,11 @@ jobs:
 
   style_check:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: Style check
     runs-on: ubuntu-22.04
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: sh ./ci/install-rust.sh
@@ -114,7 +95,6 @@ jobs:
 
   docker_linux_tier2:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: Docker Linux Tier2
@@ -125,24 +105,14 @@ jobs:
       max-parallel: 12
       matrix:
         target: [
-          # FIXME: Mysterious failures in CI, see
-          # https://github.com/rust-lang/libc/issues/2081
-          # aarch64-linux-android,
+          aarch64-linux-android,
           aarch64-unknown-linux-gnu,
           aarch64-unknown-linux-musl,
           arm-linux-androideabi,
           arm-unknown-linux-gnueabihf,
           arm-unknown-linux-musleabihf,
-          asmjs-unknown-emscripten,
           i686-linux-android,
           i686-unknown-linux-musl,
-          mips-unknown-linux-gnu,
-          mips-unknown-linux-musl,
-          # FIXME: Somehow failed on CI
-          # https://github.com/rust-lang/libc/runs/1659882216
-          # mips64-unknown-linux-gnuabi64,
-          # mips64el-unknown-linux-gnuabi64,
-          mipsel-unknown-linux-musl,
           powerpc-unknown-linux-gnu,
           powerpc64-unknown-linux-gnu,
           powerpc64le-unknown-linux-gnu,
@@ -164,9 +134,6 @@ jobs:
           # x86_64-unknown-redox,
         ]
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: TARGET=${{ matrix.target }} sh ./ci/install-rust.sh
@@ -177,7 +144,6 @@ jobs:
   # Because of this, only the nightly compiler can be used on these targets.
   docker_linux_build_std:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     if: ${{ false }} # This is currently broken
@@ -192,9 +158,6 @@ jobs:
           armv7-unknown-linux-uclibceabihf
         ]
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: TOOLCHAIN=nightly INSTALL_RUST_SRC=1 sh ./ci/install-rust.sh
@@ -204,16 +167,12 @@ jobs:
   # devkitpro's pacman needs to be connected from Docker.
   docker_switch:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: Docker Switch
     needs: [docker_linux_tier1, style_check]
     runs-on: ubuntu-22.04
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: sh ./ci/install-rust.sh
@@ -222,7 +181,6 @@ jobs:
 
   build_channels_linux:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: Build Channels Linux
@@ -247,9 +205,6 @@ jobs:
           1.30.0,
         ]
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: TOOLCHAIN=${{ matrix.toolchain }} sh ./ci/install-rust.sh
@@ -269,9 +224,9 @@ jobs:
       max-parallel: 4
       matrix:
         target:
-          - { toolchain: stable, os: macos-12 }
-          - { toolchain: beta, os: macos-12 }
-          - { toolchain: nightly, os: macos-12 }
+          - { toolchain: stable, os: macos-13 }
+          - { toolchain: beta, os: macos-13 }
+          - { toolchain: nightly, os: macos-13 }
           # Use macOS 11 for older toolchains as newer Xcode donesn't work well.
           # FIXME: Disabled due to:
           # error: failed to parse registry's information for: serde
@@ -282,9 +237,6 @@ jobs:
           - { toolchain: 1.30.0, os: macos-11 }
     runs-on: ${{ matrix.target.os }}
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: TOOLCHAIN=${{ matrix.target.toolchain }} sh ./ci/install-rust.sh
@@ -320,30 +272,21 @@ jobs:
 
   check_cfg:
     permissions:
-      actions: write # to cancel workflows (rust-lang/simpleinfra/github-actions/cancel-outdated-builds)
       contents: read # to fetch code (actions/checkout)
 
     name: "Check #[cfg]s"
     runs-on: ubuntu-22.04
     steps:
-      - uses: rust-lang/simpleinfra/github-actions/cancel-outdated-builds@HEAD
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v4
       - name: Setup Rust toolchain
         run: TOOLCHAIN=nightly sh ./ci/install-rust.sh
       - name: Build with check-cfg
         run: LIBC_CI=1 LIBC_CHECK_CFG=1 cargo build -Z unstable-options -Z check-cfg
 
-  # These jobs doesn't actually test anything, but they're only used to tell
-  # bors the build completed, as there is no practical way to detect when a
-  # workflow is successful listening to webhooks only.
-  #
-  # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
-
-  end_success:
-    name: bors build finished
-    if: github.event.pusher.name == 'bors' && success()
+  # One job that "summarizes" the success state of this pipeline. This can then be added to branch
+  # protection, rather than having to add each job separately.
+  success:
+    name: success
     runs-on: ubuntu-22.04
     needs: [
       docker_linux_tier1,
@@ -357,28 +300,11 @@ jobs:
       build_channels_macos,
       build_channels_windows,
     ]
-
+    # Github branch protection is exceedingly silly and treats "jobs skipped because a dependency
+    # failed" as success. So we have to do some contortions to ensure the job fails if any of its
+    # dependencies fails.
+    if: always() # make sure this is never "skipped"
     steps:
-      - name: Mark the job as successful
-        run: exit 0
-
-  end_failure:
-    name: bors build finished
-    if: github.event.pusher.name == 'bors' && (failure() || cancelled())
-    runs-on: ubuntu-22.04
-    needs: [
-      docker_linux_tier1,
-      docker_linux_tier2,
-      #docker_linux_build_std,
-      macos,
-      windows,
-      style_check,
-      docker_switch,
-      build_channels_linux,
-      build_channels_macos,
-      build_channels_windows,
-    ]
-
-    steps:
-      - name: Mark the job as a failure
-        run: exit 1
+      # Manually check the status of all dependencies. `if: failure()` does not work.
+      - name: check if any dependency failed
+        run: jq --exit-status 'all(.result == "success")' <<< '${{ toJson(needs) }}'

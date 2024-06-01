@@ -1100,6 +1100,7 @@ RFLINUXTHPN
 RFMEM
 RFNOWAIT
 RFPROC
+RFSIGSHARE
 RFSPAWN
 RFTHREAD
 RFTSIGZMB
@@ -2191,6 +2192,7 @@ shmid_ds
 sigaltstack
 sigevent
 siginfo_t
+sigsuspend
 sigtimedwait
 sigwait
 sigwaitinfo
@@ -2203,6 +2205,8 @@ statfs
 strcasecmp
 strcasestr
 strchrnul
+strftime
+strftime_l
 strncasecmp
 strndup
 strsignal
@@ -2245,3 +2249,5 @@ dirname
 basename
 closefrom
 close_range
+eventfd_read
+eventfd_write

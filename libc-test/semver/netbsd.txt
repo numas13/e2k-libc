@@ -643,6 +643,7 @@ MAP_NORESERVE
 MAP_REMAPDUP
 MAP_RENAME
 MAP_STACK
+MAP_TRYFIXED
 MAP_WIRED
 MAXFREQ
 MAXPHASE
@@ -863,6 +864,19 @@ Q_SETQUOTA
 Q_SYNC
 RADIXCHAR
 RAND_MAX
+RB_ASKNAME
+RB_AUTOBOOT
+RB_DUMP
+RB_HALT
+RB_INITNAME
+RB_KDB
+RB_MINIROOT
+RB_NOSYNC
+RB_POWERDOWN
+RB_RDONLY
+RB_SINGLE
+RB_STRING
+RB_USERCONF
 REG_ASSERT
 REG_ATOI
 REG_BACKR
@@ -1466,6 +1480,7 @@ readdir_r
 readlinkat
 reallocarr
 reallocarray
+reboot
 recvmmsg
 recvmsg
 regcomp
@@ -1523,6 +1538,7 @@ shmid_ds
 sigaltstack
 sigevent
 siginfo_t
+sigsuspend
 sigtimedwait
 sigwait
 sigwaitinfo
@@ -1536,6 +1552,8 @@ stack_t
 strcasecmp
 strcasestr
 string_to_flags
+strftime
+strftime_l
 strncasecmp
 strndup
 strpct

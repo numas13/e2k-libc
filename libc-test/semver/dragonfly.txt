@@ -326,6 +326,9 @@ GLOB_NOESCAPE
 GLOB_NOMATCH
 GLOB_NOSORT
 GLOB_NOSPACE
+GRND_INSECURE
+GRND_NONBLOCK
+GRND_RANDOM
 HW_BYTEORDER
 HW_DISKNAMES
 HW_DISKSTATS
@@ -1263,6 +1266,7 @@ chroot
 clearerr
 clock_getcpuclockid
 clock_getres
+clock_nanosleep
 clock_settime
 cmsgcred
 cmsghdr
@@ -1307,6 +1311,7 @@ fstatfs
 futimes
 getdomainname
 getdtablesize
+getentropy
 getgrent
 getgrent_r
 getgrgid
@@ -1330,6 +1335,7 @@ getprogname
 getpwent
 getpwent_r
 getpwnam_r
+getrandom
 getresgid
 getresuid
 getrlimit
@@ -1537,6 +1543,7 @@ shmget
 sigaltstack
 sigevent
 siginfo_t
+sigsuspend
 sigtimedwait
 sigwait
 sigwaitinfo
@@ -1547,6 +1554,8 @@ stack_t
 statfs
 strcasecmp
 strcasestr
+strftime
+strftime_l
 strncasecmp
 strndup
 strsignal
